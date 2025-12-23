@@ -110,6 +110,76 @@ const SCENARIO_EQUIPMENT = {
   }
 };
 
+// ============================================================================
+// NADCA COMPLIANCE CHECKLIST
+// ============================================================================
+
+const NADCA_CHECKLIST = {
+  preInspectionPhotos: {
+    id: 'preInspectionPhotos',
+    name: 'Pre-Inspection Photos',
+    description: 'Document initial system condition before any work begins',
+    phase: 'SiteSurvey',
+    required: true
+  },
+  accessPointDocumentation: {
+    id: 'accessPointDocumentation',
+    name: 'Access Point Documentation',
+    description: 'Photo and location label for each access point (CQA + date)',
+    phase: 'AccessCutting',
+    required: true
+  },
+  beforePhotos: {
+    id: 'beforePhotos',
+    name: 'Before Photos',
+    description: 'Before photos of each duct run showing contamination level',
+    phase: 'DuctCleaning',
+    required: true
+  },
+  afterPhotos: {
+    id: 'afterPhotos',
+    name: 'After Photos',
+    description: 'After photos of each duct run showing cleaned condition',
+    phase: 'DuctCleaning',
+    required: true
+  },
+  customerScopeSignoff: {
+    id: 'customerScopeSignoff',
+    name: 'Customer Scope Sign-off',
+    description: 'Customer acknowledgment of work scope before starting',
+    phase: 'Arrival',
+    required: true
+  },
+  hazardDocumentation: {
+    id: 'hazardDocumentation',
+    name: 'Hazard Documentation',
+    description: 'Photos and timestamps of any hazards discovered',
+    phase: 'SiteSurvey',
+    required: false // Only required if hazards found
+  },
+  finalWalkthroughSignature: {
+    id: 'finalWalkthroughSignature',
+    name: 'Final Walkthrough Signature',
+    description: 'Customer signature after walkthrough confirming work completion',
+    phase: 'Completion',
+    required: true
+  }
+};
+
+const NADCA_INFO = {
+  title: 'Why NADCA Compliance Matters',
+  points: [
+    { icon: '⚖️', text: 'Liability Protection: Documented work protects against false damage claims and disputes' },
+    { icon: '🏆', text: 'Professionalism: NADCA-certified work demonstrates industry-standard practices' },
+    { icon: '📋', text: 'Quality Assurance: Checklists ensure consistent, thorough cleaning every time' },
+    { icon: '🤝', text: 'Customer Trust: Transparent documentation builds confidence in your work' },
+    { icon: '💼', text: 'Business Value: NADCA compliance can justify premium pricing and win commercial bids' }
+  ],
+  fullCompliance: '+15 bonus points and "NADCA-Compliant Job" badge',
+  partialCompliance: 'Warning displayed - some documentation missing',
+  noCompliance: '-10 penalty - customer can dispute work quality'
+};
+
 // Courthouse crew members - real crew assignments
 const COURTHOUSE_CREW = {
   jeff: {
@@ -2772,7 +2842,18 @@ const initialState = {
   currentFloor: 1, // For courthouse multi-floor navigation
   // Access cutting state
   accessCuts: [], // Array of { id, location, type, size, lined, linedDuctHandled, capped }
-  accessCuttingComplete: false
+  accessCuttingComplete: false,
+  // NADCA compliance tracking
+  nadcaChecklist: {
+    // preInspectionPhotos: { completed: false, timestamp: null }
+    // accessPointDocumentation: { completed: false, points: [], timestamp: null }
+    // beforePhotos: { completed: false, ducts: {}, timestamp: null }
+    // afterPhotos: { completed: false, ducts: {}, timestamp: null }
+    // customerScopeSignoff: { completed: false, timestamp: null }
+    // hazardDocumentation: { completed: false, hazards: [], timestamp: null }
+    // finalWalkthroughSignature: { completed: false, timestamp: null }
+  },
+  nadcaComplianceCalculated: false
 };
 
 function gameReducer(state, action) {
@@ -3052,6 +3133,117 @@ function gameReducer(state, action) {
       return initialState;
     case 'TOGGLE_PAUSE':
       return { ...state, paused: !state.paused };
+    // NADCA Compliance Actions
+    case 'NADCA_COMPLETE_ITEM': {
+      const { itemId, data } = action;
+      return {
+        ...state,
+        nadcaChecklist: {
+          ...state.nadcaChecklist,
+          [itemId]: {
+            completed: true,
+            timestamp: new Date().toISOString(),
+            ...data
+          }
+        }
+      };
+    }
+    case 'NADCA_ADD_ACCESS_POINT_DOC': {
+      const existing = state.nadcaChecklist.accessPointDocumentation || { completed: false, points: [] };
+      return {
+        ...state,
+        nadcaChecklist: {
+          ...state.nadcaChecklist,
+          accessPointDocumentation: {
+            ...existing,
+            completed: true,
+            points: [...existing.points, action.point],
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+    }
+    case 'NADCA_ADD_DUCT_BEFORE_PHOTO': {
+      const existing = state.nadcaChecklist.beforePhotos || { completed: false, ducts: {} };
+      const updatedDucts = { ...existing.ducts, [action.ductId]: true };
+      return {
+        ...state,
+        nadcaChecklist: {
+          ...state.nadcaChecklist,
+          beforePhotos: {
+            ...existing,
+            completed: true,
+            ducts: updatedDucts,
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+    }
+    case 'NADCA_ADD_DUCT_AFTER_PHOTO': {
+      const existing = state.nadcaChecklist.afterPhotos || { completed: false, ducts: {} };
+      const updatedDucts = { ...existing.ducts, [action.ductId]: true };
+      return {
+        ...state,
+        nadcaChecklist: {
+          ...state.nadcaChecklist,
+          afterPhotos: {
+            ...existing,
+            completed: true,
+            ducts: updatedDucts,
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+    }
+    case 'NADCA_ADD_HAZARD_DOC': {
+      const existing = state.nadcaChecklist.hazardDocumentation || { completed: false, hazards: [] };
+      return {
+        ...state,
+        nadcaChecklist: {
+          ...state.nadcaChecklist,
+          hazardDocumentation: {
+            ...existing,
+            completed: true,
+            hazards: [...existing.hazards, action.hazard],
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+    }
+    case 'CALCULATE_NADCA_COMPLIANCE': {
+      // Calculate compliance and apply bonuses/penalties
+      const checklist = state.nadcaChecklist;
+      const requiredItems = ['preInspectionPhotos', 'accessPointDocumentation', 'beforePhotos', 'afterPhotos', 'customerScopeSignoff', 'finalWalkthroughSignature'];
+      const completedCount = requiredItems.filter(item => checklist[item]?.completed).length;
+      const totalRequired = requiredItems.length;
+      const compliancePercent = Math.round((completedCount / totalRequired) * 100);
+
+      let newScore = state.score;
+      let newBonuses = [...state.bonuses];
+      let newPenalties = [...state.penalties];
+
+      if (completedCount === totalRequired) {
+        // Full compliance: +15 bonus
+        newScore = Math.min(100, state.score + 15);
+        newBonuses.push({ reason: 'Full NADCA compliance - NADCA-Compliant Job badge earned', points: 15 });
+      } else if (completedCount === 0) {
+        // No compliance: -10 penalty
+        newScore = Math.max(0, state.score - 10);
+        newPenalties.push({ reason: 'No NADCA documentation - customer can dispute work quality', points: 10 });
+      }
+      // Partial compliance: just a warning, no score change
+
+      return {
+        ...state,
+        score: newScore,
+        bonuses: newBonuses,
+        penalties: newPenalties,
+        nadcaComplianceCalculated: true,
+        nadcaCompliancePercent: compliancePercent,
+        nadcaComplianceCount: completedCount,
+        nadcaComplianceTotal: totalRequired
+      };
+    }
     default:
       return state;
   }
@@ -4357,6 +4549,9 @@ function SiteMapNavigation({ state, dispatch, onComplete }) {
 
 function SiteSurvey({ state, dispatch }) {
   const [identified, setIdentified] = useState(false);
+  const [nadcaStep, setNadcaStep] = useState(state.nadcaChecklist.preInspectionPhotos?.completed ? 'identify' : 'documentation');
+  const [showNadcaInfo, setShowNadcaInfo] = useState(false);
+
   const systems = [
     { id: 'split', name: 'Residential Split System', desc: 'Air handler + outdoor condenser', icon: '🏠' },
     { id: 'rtu', name: 'Rooftop Unit (RTU)', desc: 'Packaged unit on roof', icon: '🏢' },
@@ -4364,7 +4559,17 @@ function SiteSurvey({ state, dispatch }) {
     { id: 'vav', name: 'VAV System', desc: 'Variable air volume with boxes', icon: '🏗️' }
   ];
   const correctSystem = SCENARIOS[state.scenario]?.systemType;
-  
+
+  const handleDocumentCondition = () => {
+    dispatch({ type: 'NADCA_COMPLETE_ITEM', itemId: 'preInspectionPhotos', data: {} });
+    dispatch({ type: 'ADD_BONUS', reason: 'NADCA: Pre-inspection photos documented', points: 2 });
+    setNadcaStep('identify');
+  };
+
+  const handleSkipDocumentation = () => {
+    setNadcaStep('identify');
+  };
+
   const handleIdentify = (systemId) => {
     if (systemId === correctSystem) {
       dispatch({ type: 'ADD_BONUS', reason: 'Correct system identification', points: 5 });
@@ -4375,9 +4580,83 @@ function SiteSurvey({ state, dispatch }) {
     setIdentified(true);
     setTimeout(() => dispatch({ type: 'SET_SUBPHASE', subPhase: 2 }), 1500);
   };
-  
+
+  // NADCA Documentation Step
+  if (nadcaStep === 'documentation') {
+    return (
+      <div className="space-y-4">
+        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-blue-400 font-bold flex items-center gap-2">
+              📸 NADCA Documentation
+              <button
+                onClick={() => setShowNadcaInfo(!showNadcaInfo)}
+                className="text-xs bg-blue-800 hover:bg-blue-700 px-2 py-0.5 rounded"
+              >
+                {showNadcaInfo ? 'Hide Info' : 'Why?'}
+              </button>
+            </h3>
+            <span className="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded">Step 1 of 7</span>
+          </div>
+
+          {showNadcaInfo && (
+            <div className="mb-4 p-3 bg-zinc-900 rounded text-sm">
+              <p className="text-yellow-400 font-bold mb-2">{NADCA_INFO.title}</p>
+              <ul className="space-y-1 text-zinc-400">
+                {NADCA_INFO.points.map((point, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span>{point.icon}</span>
+                    <span>{point.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p className="text-zinc-300 mb-4">
+            <strong>Document Initial System Condition</strong>
+          </p>
+          <p className="text-zinc-400 text-sm mb-4">
+            Before any work begins, take photos of the existing HVAC system condition. This establishes a baseline and protects against false damage claims.
+          </p>
+
+          <div className="bg-zinc-900 rounded p-3 mb-4">
+            <p className="text-zinc-500 text-xs mb-2">Recommended photos:</p>
+            <ul className="text-zinc-400 text-sm space-y-1">
+              <li>• Air handler / furnace exterior</li>
+              <li>• Supply and return registers (representative samples)</li>
+              <li>• Any existing damage or wear</li>
+              <li>• Access areas where you'll be working</li>
+            </ul>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleDocumentCondition}
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-all"
+            >
+              📷 Document Condition (+2 pts)
+            </button>
+            <button
+              onClick={handleSkipDocumentation}
+              className="px-4 py-3 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded transition-all"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {state.nadcaChecklist.preInspectionPhotos?.completed && (
+        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-2 flex items-center gap-2 text-green-400 text-sm">
+          <span>✓</span>
+          <span>NADCA: Pre-inspection photos documented</span>
+        </div>
+      )}
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
         <h3 className="text-yellow-400 font-bold mb-4">🔍 System Identification</h3>
         <p className="text-zinc-400 text-sm mb-4">Based on your site survey, identify the HVAC system type:</p>
@@ -4474,12 +4753,15 @@ function HazardCheck({ state, dispatch }) {
 
 function AccessCutting({ state, dispatch }) {
   const [selectedPoint, setSelectedPoint] = useState(null);
-  const [cutStep, setCutStep] = useState('select_location'); // select_location, select_type, lined_step, select_size, confirm
+  const [cutStep, setCutStep] = useState('select_location'); // select_location, select_type, lined_step, select_size, confirm, label_nadca
   const [selectedCutType, setSelectedCutType] = useState(null);
   const [linedHandled, setLinedHandled] = useState(false);
   const [selectedSize, setSelectedSize] = useState('standard');
   const [showResult, setShowResult] = useState(false);
   const [resultMessage, setResultMessage] = useState(null);
+  const [pendingCutData, setPendingCutData] = useState(null);
+
+  const todayDate = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
 
   const scenario = DUCT_ACCESS_SCENARIOS[state.scenario];
   const layout = scenario.layout;
@@ -4539,9 +4821,8 @@ function AccessCutting({ state, dispatch }) {
       dispatch({ type: 'ADD_PENALTY', reason: sizeData.reason, points: sizeData.penalty });
     }
 
-    // Add the cut
-    dispatch({
-      type: 'ADD_ACCESS_CUT',
+    // Store pending cut data for after labeling
+    setPendingCutData({
       id: selectedPoint.id,
       location: selectedPoint.id,
       name: selectedPoint.name,
@@ -4553,13 +4834,37 @@ function AccessCutting({ state, dispatch }) {
       purpose: selectedPoint.purpose
     });
 
+    // Go to NADCA labeling step
+    setCutStep('label_nadca');
+  };
+
+  const handleLabelCut = (labeled) => {
+    // Add the cut
+    dispatch({
+      type: 'ADD_ACCESS_CUT',
+      ...pendingCutData
+    });
+
+    if (labeled) {
+      // NADCA documentation for access point
+      dispatch({
+        type: 'NADCA_ADD_ACCESS_POINT_DOC',
+        point: {
+          id: pendingCutData.id,
+          name: pendingCutData.name,
+          label: `CQA ${todayDate}`,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
     // Show result and reset
-    const isOptimal = scenario.optimalCuts.includes(selectedPoint.id);
+    const isOptimal = scenario.optimalCuts.includes(pendingCutData.id);
     setResultMessage({
       success: true,
       text: isOptimal
-        ? `Cut complete at ${selectedPoint.name}. Good positioning for ${selectedPoint.purpose === 'whip' ? 'whip insertion' : 'vacuum connection'}!`
-        : `Cut complete at ${selectedPoint.name}. This location works but may not be optimal.`
+        ? `Cut complete at ${pendingCutData.name}. ${labeled ? 'Labeled for NADCA compliance. ' : ''}Good positioning for ${pendingCutData.purpose === 'whip' ? 'whip insertion' : 'vacuum connection'}!`
+        : `Cut complete at ${pendingCutData.name}. ${labeled ? 'Labeled for NADCA compliance. ' : ''}This location works but may not be optimal.`
     });
     setShowResult(true);
 
@@ -4570,6 +4875,7 @@ function AccessCutting({ state, dispatch }) {
       setSelectedCutType(null);
       setLinedHandled(false);
       setSelectedSize('standard');
+      setPendingCutData(null);
     }, 2000);
   };
 
@@ -4847,6 +5153,48 @@ function AccessCutting({ state, dispatch }) {
                   className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-all"
                 >
                   Make Cut
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: NADCA Access Point Label */}
+          {cutStep === 'label_nadca' && pendingCutData && (
+            <div className="space-y-3">
+              <div className="bg-blue-900/30 border border-blue-500/50 rounded p-3">
+                <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
+                  🏷️ NADCA Access Point Documentation
+                </h4>
+                <p className="text-zinc-400 text-sm mb-3">
+                  Label this access point for compliance documentation. Write "CQA {todayDate}" on the cap/cover.
+                </p>
+                <div className="bg-zinc-900 rounded p-3 mb-3">
+                  <div className="flex items-center justify-center gap-2 text-lg">
+                    <span className="text-zinc-500">Label:</span>
+                    <span className="font-mono text-yellow-400 bg-zinc-800 px-3 py-1 rounded border border-yellow-500/30">
+                      CQA {todayDate}
+                    </span>
+                  </div>
+                  <p className="text-center text-zinc-500 text-xs mt-2">
+                    Company initials + date
+                  </p>
+                </div>
+                <p className="text-zinc-500 text-xs">
+                  This label identifies when and who made this access cut, required for NADCA compliance.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleLabelCut(false)}
+                  className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded transition-all"
+                >
+                  Skip Label
+                </button>
+                <button
+                  onClick={() => handleLabelCut(true)}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-all"
+                >
+                  📷 Photo & Label Done
                 </button>
               </div>
             </div>
@@ -5300,6 +5648,8 @@ function DuctCleaning({ state, dispatch }) {
   const [currentProblem, setCurrentProblem] = useState(null);
   const [showGaugeCheck, setShowGaugeCheck] = useState(false);
   const [currentGaugeScenario, setCurrentGaugeScenario] = useState(null);
+  const [nadcaStep, setNadcaStep] = useState('before'); // 'before', 'cleaning', 'after'
+  const [beforePhotoTaken, setBeforePhotoTaken] = useState(false);
 
   // For courthouse, get floor-specific ducts based on current day
   const ducts = state.scenario === 'courthouse'
@@ -5399,18 +5749,54 @@ function DuctCleaning({ state, dispatch }) {
   
   const material = DUCT_MATERIALS[currentDuct.material];
   
+  const handleTakeBeforePhoto = () => {
+    dispatch({ type: 'NADCA_ADD_DUCT_BEFORE_PHOTO', ductId: currentDuct.id });
+    setBeforePhotoTaken(true);
+    setNadcaStep('cleaning');
+  };
+
+  const handleSkipBeforePhoto = () => {
+    setNadcaStep('cleaning');
+  };
+
+  const handleTakeAfterPhoto = () => {
+    dispatch({ type: 'NADCA_ADD_DUCT_AFTER_PHOTO', ductId: currentDuct.id });
+    advanceToNextDuct();
+  };
+
+  const handleSkipAfterPhoto = () => {
+    advanceToNextDuct();
+  };
+
+  const advanceToNextDuct = () => {
+    // First check for problems (15% chance)
+    triggerRandomProblem();
+
+    // If no problem, check for gauge event (20% chance)
+    if (!showProblem) {
+      const gaugeTriggered = triggerGaugeCheck();
+      if (!gaugeTriggered) {
+        setCurrentDuctIndex(i => i + 1);
+        setSelectedTool(null);
+        setAirflowDirection(null);
+        setNadcaStep('before');
+        setBeforePhotoTaken(false);
+      }
+    }
+  };
+
   const handleClean = () => {
     if (!selectedTool || !airflowDirection) return;
-    
+
     setCleaningInProgress(true);
-    
+
     const toolAllowed = material.allowedTools.includes(selectedTool);
     const correctDirection = airflowDirection === 'upstream';
-    
+
     let quality = 'poor';
     if (toolAllowed && correctDirection) quality = 'excellent';
     else if (toolAllowed || correctDirection) quality = 'good';
-    
+
     if (!toolAllowed) {
       dispatch({ type: 'ADD_PENALTY', reason: `Wrong tool for ${material.name}`, points: 5 });
     }
@@ -5420,25 +5806,14 @@ function DuctCleaning({ state, dispatch }) {
     if (quality === 'excellent') {
       dispatch({ type: 'ADD_BONUS', reason: 'Perfect technique', points: 2 });
     }
-    
+
     dispatch({ type: 'CLEAN_DUCT', duct: currentDuct.id, quality });
     dispatch({ type: 'SET_AIRFLOW_CORRECT', duct: currentDuct.id, correct: correctDirection });
-    
+
     setTimeout(() => {
       setCleaningInProgress(false);
-
-      // First check for problems (15% chance)
-      triggerRandomProblem();
-
-      // If no problem, check for gauge event (20% chance)
-      if (!showProblem) {
-        const gaugeTriggered = triggerGaugeCheck();
-        if (!gaugeTriggered) {
-          setCurrentDuctIndex(i => i + 1);
-          setSelectedTool(null);
-          setAirflowDirection(null);
-        }
-      }
+      // Go to after photo step
+      setNadcaStep('after');
     }, 1500);
   };
   
@@ -5486,13 +5861,133 @@ function DuctCleaning({ state, dispatch }) {
     );
   }
 
+  // NADCA Before Photo Step
+  if (nadcaStep === 'before') {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-yellow-400 font-bold">🔧 Duct Cleaning</h3>
+          <span className="text-zinc-500 text-sm">{currentDuctIndex + 1} of {ducts.length}</span>
+        </div>
+
+        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+          <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
+            📸 NADCA: Before Photo
+          </h4>
+          <div className="bg-zinc-900 rounded p-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: material.color }}></div>
+              <div>
+                <p className="text-zinc-200 font-bold">{currentDuct.name}</p>
+                <p className="text-zinc-500 text-sm">{material.name} • {currentDuct.length}</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-zinc-400 text-sm mb-4">
+            Document the duct condition before cleaning. This establishes the contamination level and protects against disputes.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSkipBeforePhoto}
+              className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded transition-all"
+            >
+              Skip
+            </button>
+            <button
+              onClick={handleTakeBeforePhoto}
+              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-all"
+            >
+              📷 Take Before Photo
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 rounded p-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-zinc-500">Progress</span>
+            <span className="text-zinc-400">{Math.round((currentDuctIndex / ducts.length) * 100)}%</span>
+          </div>
+          <div className="w-full bg-zinc-700 rounded-full h-2 mt-2">
+            <div className="bg-yellow-500 h-2 rounded-full transition-all" style={{ width: `${(currentDuctIndex / ducts.length) * 100}%` }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // NADCA After Photo Step
+  if (nadcaStep === 'after') {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-yellow-400 font-bold">🔧 Duct Cleaning</h3>
+          <span className="text-zinc-500 text-sm">{currentDuctIndex + 1} of {ducts.length}</span>
+        </div>
+
+        <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+          <h4 className="text-green-400 font-bold mb-2 flex items-center gap-2">
+            📸 NADCA: After Photo
+          </h4>
+          <div className="bg-zinc-900 rounded p-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: material.color }}></div>
+              <div>
+                <p className="text-zinc-200 font-bold">{currentDuct.name}</p>
+                <p className="text-zinc-500 text-sm">{material.name} • Cleaned: {state.ductsClean[currentDuct.id]}</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-zinc-400 text-sm mb-4">
+            Document the cleaned duct condition. This proves the work was completed and shows the improvement.
+          </p>
+          {beforePhotoTaken && (
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded p-2 mb-3 text-blue-300 text-sm">
+              ✓ Before photo documented for this duct
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={handleSkipAfterPhoto}
+              className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded transition-all"
+            >
+              Skip
+            </button>
+            <button
+              onClick={handleTakeAfterPhoto}
+              className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all"
+            >
+              📷 Take After Photo
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 rounded p-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-zinc-500">Progress</span>
+            <span className="text-zinc-400">{Math.round((currentDuctIndex / ducts.length) * 100)}%</span>
+          </div>
+          <div className="w-full bg-zinc-700 rounded-full h-2 mt-2">
+            <div className="bg-yellow-500 h-2 rounded-full transition-all" style={{ width: `${(currentDuctIndex / ducts.length) * 100}%` }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-yellow-400 font-bold">🔧 Duct Cleaning</h3>
         <span className="text-zinc-500 text-sm">{currentDuctIndex + 1} of {ducts.length}</span>
       </div>
-      
+
+      {beforePhotoTaken && (
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded p-2 text-blue-300 text-sm flex items-center gap-2">
+          <span>✓</span>
+          <span>NADCA: Before photo documented</span>
+        </div>
+      )}
+
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-4 h-4 rounded-full" style={{ backgroundColor: material.color }}></div>
@@ -5501,11 +5996,11 @@ function DuctCleaning({ state, dispatch }) {
             <p className="text-zinc-500 text-sm">{material.name} • {currentDuct.length}</p>
           </div>
         </div>
-        
+
         <div className="bg-orange-900/20 border border-orange-500/30 rounded p-2 mb-4">
           <p className="text-orange-400 text-sm">⚠️ {material.warning}</p>
         </div>
-        
+
         <div className="mb-4">
           <p className="text-zinc-400 text-sm mb-2">Select Tool:</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -5517,7 +6012,7 @@ function DuctCleaning({ state, dispatch }) {
             ))}
           </div>
         </div>
-        
+
         <div className="mb-4">
           <p className="text-zinc-400 text-sm mb-2">Cleaning Direction:</p>
           <div className="grid grid-cols-2 gap-2">
@@ -5531,7 +6026,7 @@ function DuctCleaning({ state, dispatch }) {
             </button>
           </div>
         </div>
-        
+
         {cleaningInProgress ? (
           <div className="text-center py-4">
             <div className="animate-spin text-4xl">🌀</div>
@@ -5543,7 +6038,7 @@ function DuctCleaning({ state, dispatch }) {
           </button>
         )}
       </div>
-      
+
       <div className="bg-zinc-900 rounded p-3">
         <div className="flex justify-between text-sm">
           <span className="text-zinc-500">Progress</span>
@@ -5553,7 +6048,7 @@ function DuctCleaning({ state, dispatch }) {
           <div className="bg-yellow-500 h-2 rounded-full transition-all" style={{ width: `${(currentDuctIndex / ducts.length) * 100}%` }}></div>
         </div>
       </div>
-      
+
       <div className="bg-blue-900/20 border border-blue-500/30 rounded p-3">
         <p className="text-blue-300 text-sm"><span className="font-bold">💡 Remember:</span> Whip upstream, vacuum downstream. Debris flows with the vacuum pull.</p>
       </div>
@@ -6445,12 +6940,25 @@ function DayStartPhase({ state, dispatch }) {
 }
 
 function CompletionPhase({ state, dispatch }) {
-  const [subPhase, setSubPhase] = useState(state.accessCuts.length > 0 ? 'cap_cuts' : 'photos'); // 'cap_cuts', 'photos', 'walkthrough', 'complete'
+  const [subPhase, setSubPhase] = useState(state.accessCuts.length > 0 ? 'cap_cuts' : 'photos'); // 'cap_cuts', 'photos', 'nadca_review', 'walkthrough', 'signature', 'complete'
   const [walkthroughDone, setWalkthroughDone] = useState(false);
   const [cappingComplete, setCappingComplete] = useState(false);
+  const [showNadcaInfo, setShowNadcaInfo] = useState(false);
 
   const uncappedCuts = state.accessCuts.filter(c => !c.capped);
   const allCutsCapped = uncappedCuts.length === 0;
+
+  // Calculate NADCA compliance status
+  const nadcaItems = [
+    { id: 'preInspectionPhotos', name: 'Pre-Inspection Photos', completed: state.nadcaChecklist.preInspectionPhotos?.completed },
+    { id: 'accessPointDocumentation', name: 'Access Point Labels', completed: state.nadcaChecklist.accessPointDocumentation?.completed },
+    { id: 'beforePhotos', name: 'Before Photos', completed: state.nadcaChecklist.beforePhotos?.completed },
+    { id: 'afterPhotos', name: 'After Photos', completed: state.nadcaChecklist.afterPhotos?.completed },
+    { id: 'customerScopeSignoff', name: 'Customer Scope Sign-off', completed: state.nadcaChecklist.customerScopeSignoff?.completed },
+    { id: 'finalWalkthroughSignature', name: 'Final Walkthrough Signature', completed: state.nadcaChecklist.finalWalkthroughSignature?.completed }
+  ];
+  const nadcaCompletedCount = nadcaItems.filter(item => item.completed).length;
+  const nadcaTotalCount = nadcaItems.length;
 
   const handleCapCut = (cutId) => {
     dispatch({ type: 'CAP_ACCESS_CUT', cutId });
@@ -6470,16 +6978,33 @@ function CompletionPhase({ state, dispatch }) {
   };
 
   const handlePhotosDone = () => {
-    setSubPhase('walkthrough');
+    setSubPhase('nadca_review');
   };
 
   const handleSkipPhotos = () => {
     dispatch({ type: 'ADD_PENALTY', reason: 'Skipped photo documentation', points: 5 });
+    setSubPhase('nadca_review');
+  };
+
+  const handleNadcaReviewComplete = () => {
+    // Mark customer scope sign-off as done (assumed during review)
+    if (!state.nadcaChecklist.customerScopeSignoff?.completed) {
+      dispatch({ type: 'NADCA_COMPLETE_ITEM', itemId: 'customerScopeSignoff', data: {} });
+    }
     setSubPhase('walkthrough');
   };
 
   const handleWalkthroughComplete = () => {
     setWalkthroughDone(true);
+    setSubPhase('signature');
+  };
+
+  const handleSignatureComplete = () => {
+    dispatch({ type: 'NADCA_COMPLETE_ITEM', itemId: 'finalWalkthroughSignature', data: {} });
+    setSubPhase('complete');
+  };
+
+  const handleSkipSignature = () => {
     setSubPhase('complete');
   };
 
@@ -6487,6 +7012,8 @@ function CompletionPhase({ state, dispatch }) {
     if (state.screwInventory < state.screwsNeeded) {
       dispatch({ type: 'ADD_PENALTY', reason: `Missing ${state.screwsNeeded - state.screwInventory} screws`, points: 5 });
     }
+    // Calculate NADCA compliance before completing
+    dispatch({ type: 'CALCULATE_NADCA_COMPLIANCE' });
     dispatch({ type: 'COMPLETE_JOB' });
   };
 
@@ -6576,9 +7103,151 @@ function CompletionPhase({ state, dispatch }) {
     );
   }
 
+  // NADCA Review phase
+  if (subPhase === 'nadca_review') {
+    return (
+      <div className="space-y-4">
+        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-blue-400 font-bold flex items-center gap-2">
+              📋 NADCA Compliance Review
+              <button
+                onClick={() => setShowNadcaInfo(!showNadcaInfo)}
+                className="text-xs bg-blue-800 hover:bg-blue-700 px-2 py-0.5 rounded"
+              >
+                {showNadcaInfo ? 'Hide Info' : 'Why?'}
+              </button>
+            </h3>
+            <span className={`text-sm px-2 py-1 rounded ${
+              nadcaCompletedCount === nadcaTotalCount ? 'bg-green-900 text-green-400' :
+              nadcaCompletedCount > 0 ? 'bg-yellow-900 text-yellow-400' :
+              'bg-red-900 text-red-400'
+            }`}>
+              {nadcaCompletedCount}/{nadcaTotalCount} Complete
+            </span>
+          </div>
+
+          {showNadcaInfo && (
+            <div className="mb-4 p-3 bg-zinc-900 rounded text-sm">
+              <p className="text-yellow-400 font-bold mb-2">{NADCA_INFO.title}</p>
+              <ul className="space-y-1 text-zinc-400">
+                {NADCA_INFO.points.map((point, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span>{point.icon}</span>
+                    <span>{point.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 pt-3 border-t border-zinc-700">
+                <p className="text-green-400 text-xs">✓ Full compliance: {NADCA_INFO.fullCompliance}</p>
+                <p className="text-yellow-400 text-xs">⚠ Partial: {NADCA_INFO.partialCompliance}</p>
+                <p className="text-red-400 text-xs">✗ None: {NADCA_INFO.noCompliance}</p>
+              </div>
+            </div>
+          )}
+
+          <p className="text-zinc-400 text-sm mb-4">
+            Review your NADCA compliance documentation before customer walkthrough:
+          </p>
+
+          <div className="space-y-2">
+            {nadcaItems.map((item) => (
+              <div
+                key={item.id}
+                className={`p-3 rounded-lg border-2 flex items-center justify-between ${
+                  item.completed ? 'bg-green-900/30 border-green-500' : 'bg-zinc-900 border-zinc-700'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={item.completed ? 'text-green-400' : 'text-zinc-500'}>
+                    {item.completed ? '✓' : '○'}
+                  </span>
+                  <span className={item.completed ? 'text-green-400' : 'text-zinc-400'}>
+                    {item.name}
+                  </span>
+                </div>
+                {item.completed && (
+                  <span className="text-xs text-zinc-500">Documented</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {nadcaCompletedCount < nadcaTotalCount && (
+            <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded text-yellow-400 text-sm">
+              ⚠️ {nadcaTotalCount - nadcaCompletedCount} item(s) missing. Partial compliance will be noted.
+            </div>
+          )}
+
+          {nadcaCompletedCount === nadcaTotalCount && (
+            <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded text-green-400 text-sm">
+              ✓ Full NADCA compliance! You'll earn +15 bonus points.
+            </div>
+          )}
+
+          <button
+            onClick={handleNadcaReviewComplete}
+            className="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-all"
+          >
+            Continue to Customer Walkthrough →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Customer walkthrough phase
   if (subPhase === 'walkthrough' && !walkthroughDone) {
     return <CustomerWalkthrough state={state} dispatch={dispatch} onComplete={handleWalkthroughComplete} />;
+  }
+
+  // Final signature phase
+  if (subPhase === 'signature') {
+    return (
+      <div className="space-y-4">
+        <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+          <h3 className="text-green-400 font-bold mb-4 flex items-center gap-2">
+            ✍️ NADCA: Final Walkthrough Signature
+          </h3>
+          <p className="text-zinc-400 text-sm mb-4">
+            Obtain customer signature confirming the walkthrough was completed and they are satisfied with the work.
+          </p>
+
+          <div className="bg-zinc-900 rounded p-4 mb-4">
+            <p className="text-zinc-300 font-bold mb-2">Customer Sign-off Statement:</p>
+            <p className="text-zinc-500 text-sm italic">
+              "I have reviewed the completed duct cleaning work and am satisfied with the service provided.
+              All areas have been inspected during the walkthrough."
+            </p>
+            <div className="mt-4 border-t border-zinc-700 pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500 text-sm">Customer Signature:</span>
+                <div className="w-32 border-b border-zinc-600"></div>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-zinc-500 text-sm">Date:</span>
+                <span className="text-zinc-400 text-sm">{new Date().toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleSkipSignature}
+              className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded transition-all"
+            >
+              Skip Signature
+            </button>
+            <button
+              onClick={handleSignatureComplete}
+              className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all"
+            >
+              ✓ Signature Obtained
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Final completion screen
@@ -6731,6 +7400,92 @@ function ResultsScreen({ state, dispatch }) {
             <p className="text-xs text-zinc-500">Screws Recovered</p>
           </div>
         </div>
+      </div>
+
+      {/* NADCA Compliance Summary */}
+      <div className={`rounded-lg p-4 border ${
+        state.nadcaComplianceCount === state.nadcaComplianceTotal
+          ? 'bg-blue-900/30 border-blue-500'
+          : state.nadcaComplianceCount > 0
+          ? 'bg-yellow-900/30 border-yellow-500'
+          : 'bg-red-900/30 border-red-500'
+      }`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className={`font-bold ${
+            state.nadcaComplianceCount === state.nadcaComplianceTotal
+              ? 'text-blue-400'
+              : state.nadcaComplianceCount > 0
+              ? 'text-yellow-400'
+              : 'text-red-400'
+          }`}>📋 NADCA Compliance</h3>
+          {state.nadcaComplianceCount === state.nadcaComplianceTotal && (
+            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
+              NADCA-COMPLIANT JOB
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-zinc-400">Documentation Items</span>
+              <span className={
+                state.nadcaComplianceCount === state.nadcaComplianceTotal
+                  ? 'text-blue-400'
+                  : state.nadcaComplianceCount > 0
+                  ? 'text-yellow-400'
+                  : 'text-red-400'
+              }>
+                {state.nadcaComplianceCount || 0}/{state.nadcaComplianceTotal || 6} items documented
+              </span>
+            </div>
+            <div className="w-full bg-zinc-700 rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all ${
+                  state.nadcaComplianceCount === state.nadcaComplianceTotal
+                    ? 'bg-blue-500'
+                    : state.nadcaComplianceCount > 0
+                    ? 'bg-yellow-500'
+                    : 'bg-red-500'
+                }`}
+                style={{ width: `${((state.nadcaComplianceCount || 0) / (state.nadcaComplianceTotal || 6)) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          {[
+            { key: 'preInspectionPhotos', label: 'Pre-Inspection' },
+            { key: 'accessPointDocumentation', label: 'Access Labels' },
+            { key: 'beforePhotos', label: 'Before Photos' },
+            { key: 'afterPhotos', label: 'After Photos' },
+            { key: 'customerScopeSignoff', label: 'Scope Sign-off' },
+            { key: 'finalWalkthroughSignature', label: 'Final Signature' }
+          ].map(item => (
+            <div key={item.key} className="flex items-center gap-1">
+              <span className={state.nadcaChecklist[item.key]?.completed ? 'text-green-400' : 'text-zinc-500'}>
+                {state.nadcaChecklist[item.key]?.completed ? '✓' : '○'}
+              </span>
+              <span className={state.nadcaChecklist[item.key]?.completed ? 'text-zinc-300' : 'text-zinc-500'}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        {state.nadcaComplianceCount === 0 && (
+          <p className="text-red-400 text-sm mt-3">
+            ⚠️ No NADCA documentation. Customer can dispute work quality.
+          </p>
+        )}
+        {state.nadcaComplianceCount > 0 && state.nadcaComplianceCount < state.nadcaComplianceTotal && (
+          <p className="text-yellow-400 text-sm mt-3">
+            ⚠️ Partial compliance ({state.nadcaComplianceCount}/{state.nadcaComplianceTotal}). Some documentation missing.
+          </p>
+        )}
+        {state.nadcaComplianceCount === state.nadcaComplianceTotal && (
+          <p className="text-blue-400 text-sm mt-3">
+            ✓ Full NADCA compliance achieved. Professional documentation complete.
+          </p>
+        )}
       </div>
 
       {/* Multi-day summary for courthouse */}
