@@ -1011,6 +1011,137 @@ const SCENARIO_DUCTS = {
 };
 
 // ============================================================================
+// ACCESS CUTTING TOOLS & SCENARIOS
+// ============================================================================
+
+const ACCESS_CUTTING_TOOLS = {
+  hole_cutter: {
+    id: 'hole_cutter',
+    name: '8" Hole Cutter',
+    description: 'Circular aviation shears for round access holes. Standard 8" diameter.',
+    icon: '⭕',
+    forCutType: 'circular',
+    color: '#3b82f6'
+  },
+  tin_snips: {
+    id: 'tin_snips',
+    name: 'Tin Snips',
+    description: 'Aviation snips for rectangular cuts. Left and right cutting variants.',
+    icon: '✂️',
+    forCutType: 'rectangular',
+    color: '#22c55e'
+  },
+  utility_knife: {
+    id: 'utility_knife',
+    name: 'Utility Knife',
+    description: 'For cutting insulation on lined duct. Must cut insulation square BEFORE metal.',
+    icon: '🔪',
+    forCutType: 'insulation',
+    color: '#f59e0b'
+  },
+  drill: {
+    id: 'drill',
+    name: 'Drill with Starter Bit',
+    description: 'For starting holes before cutting. Required for clean rectangular cuts.',
+    icon: '🔩',
+    forCutType: 'starter',
+    color: '#8b5cf6'
+  }
+};
+
+const DUCT_ACCESS_SCENARIOS = {
+  residential: {
+    name: 'Residential Attic System',
+    description: 'Simple flex duct runs from air handler. Access typically at trunk line only.',
+    requiresLinedCutting: false,
+    layout: {
+      width: 400,
+      height: 300,
+      airHandler: { x: 200, y: 30, width: 60, height: 40 },
+      trunk: { x: 100, y: 70, width: 200, height: 20, direction: 'horizontal', material: 'rigid' },
+      branches: [
+        { id: 'branch1', name: 'Master Branch', x: 100, y: 90, toX: 100, toY: 180, material: 'flex' },
+        { id: 'branch2', name: 'Bed 2 Branch', x: 150, y: 90, toX: 150, toY: 160, material: 'flex' },
+        { id: 'branch3', name: 'Bed 3 Branch', x: 250, y: 90, toX: 250, toY: 160, material: 'flex' },
+        { id: 'branch4', name: 'Living Branch', x: 300, y: 90, toX: 300, toY: 180, material: 'flex' }
+      ]
+    },
+    accessPoints: [
+      { id: 'trunk_access', name: 'Main Trunk Access', x: 120, y: 70, recommended: true, position: 'upstream', purpose: 'whip', minCuts: true },
+      { id: 'trunk_vacuum', name: 'Trunk Vacuum Port', x: 280, y: 70, recommended: true, position: 'downstream', purpose: 'vacuum', minCuts: true }
+    ],
+    minCutsRequired: 2,
+    optimalCuts: ['trunk_access', 'trunk_vacuum']
+  },
+  commercial: {
+    name: 'Commercial RTU System',
+    description: 'Long rigid metal trunk runs with lined branch ducts. Multiple access points needed.',
+    requiresLinedCutting: true,
+    layout: {
+      width: 450,
+      height: 280,
+      airHandler: { x: 20, y: 80, width: 70, height: 50, label: 'RTU' },
+      trunk: { x: 90, y: 95, width: 340, height: 20, direction: 'horizontal', material: 'rigid' },
+      branches: [
+        { id: 'reception', name: 'Reception', x: 130, y: 115, toX: 130, toY: 180, material: 'rigid' },
+        { id: 'exam1', name: 'Exam 1', x: 180, y: 115, toX: 180, toY: 170, material: 'rigid' },
+        { id: 'exam2', name: 'Exam 2', x: 230, y: 115, toX: 230, toY: 170, material: 'rigid' },
+        { id: 'exam3', name: 'Exam 3', x: 280, y: 115, toX: 280, toY: 170, material: 'rigid' },
+        { id: 'office', name: 'Office (Lined)', x: 330, y: 115, toX: 330, toY: 190, material: 'lined' },
+        { id: 'breakroom', name: 'Break Room', x: 400, y: 115, toX: 400, toY: 160, material: 'rigid' }
+      ]
+    },
+    accessPoints: [
+      { id: 'rtu_port', name: 'RTU Plenum Access', x: 100, y: 95, recommended: true, position: 'upstream', purpose: 'whip', minCuts: true },
+      { id: 'trunk_mid', name: 'Mid-Trunk Access', x: 250, y: 95, recommended: true, position: 'downstream', purpose: 'vacuum', minCuts: true },
+      { id: 'trunk_end', name: 'End-Trunk Access', x: 410, y: 95, recommended: false, position: 'downstream', purpose: 'vacuum', minCuts: false },
+      { id: 'office_access', name: 'Office Branch (Lined)', x: 330, y: 150, recommended: true, position: 'upstream', purpose: 'whip', lined: true, minCuts: true }
+    ],
+    minCutsRequired: 3,
+    optimalCuts: ['rtu_port', 'trunk_mid', 'office_access']
+  },
+  courthouse: {
+    name: 'Institutional PTAC System',
+    description: 'Historic building with lined ductwork. 8" circular access holes, whip toward PTAC units.',
+    requiresLinedCutting: true,
+    layout: {
+      width: 480,
+      height: 320,
+      airHandler: { x: 20, y: 100, width: 60, height: 50, label: 'PTAC Bank' },
+      trunk: { x: 80, y: 115, width: 380, height: 20, direction: 'horizontal', material: 'lined' },
+      branches: [
+        { id: 'courtA', name: 'Courtroom A', x: 140, y: 135, toX: 140, toY: 220, material: 'lined' },
+        { id: 'courtB', name: 'Courtroom B', x: 240, y: 135, toX: 240, toY: 220, material: 'lined' },
+        { id: 'clerks', name: 'Clerk Offices', x: 340, y: 135, toX: 340, toY: 200, material: 'rigid' },
+        { id: 'judges', name: 'Chambers', x: 420, y: 135, toX: 420, toY: 180, material: 'ductboard' }
+      ]
+    },
+    accessPoints: [
+      { id: 'ptac_access', name: 'PTAC Plenum Access', x: 90, y: 115, recommended: true, position: 'upstream', purpose: 'whip', lined: true, minCuts: true },
+      { id: 'trunk_courtA', name: 'Before Courtroom A', x: 130, y: 115, recommended: true, position: 'downstream', purpose: 'vacuum', lined: true, minCuts: true },
+      { id: 'trunk_courtB', name: 'Before Courtroom B', x: 230, y: 115, recommended: false, position: 'downstream', purpose: 'vacuum', lined: true, minCuts: false },
+      { id: 'trunk_end', name: 'Trunk End Access', x: 440, y: 115, recommended: true, position: 'downstream', purpose: 'vacuum', lined: true, minCuts: true },
+      { id: 'courtA_branch', name: 'Courtroom A Branch', x: 140, y: 170, recommended: false, position: 'upstream', purpose: 'whip', lined: true, minCuts: false },
+      { id: 'courtB_branch', name: 'Courtroom B Branch', x: 240, y: 170, recommended: false, position: 'upstream', purpose: 'whip', lined: true, minCuts: false }
+    ],
+    minCutsRequired: 3,
+    optimalCuts: ['ptac_access', 'trunk_courtA', 'trunk_end'],
+    specialNote: 'Durham County Courthouse: Lined ductwork requires insulation-first cuts. Use 8" circular access holes. Whip fishes toward PTAC units.'
+  }
+};
+
+const ACCESS_CUT_TYPES = {
+  circular: { id: 'circular', name: '8" Circular', tool: 'hole_cutter', icon: '⭕', size: 8 },
+  rectangular: { id: 'rectangular', name: 'Rectangular (6"x8")', tool: 'tin_snips', icon: '⬜', size: '6x8' }
+};
+
+const ACCESS_CUT_SIZES = {
+  small: { id: 'small', name: 'Small (6")', penalty: 10, reason: 'Too small - tools won\'t fit properly' },
+  standard: { id: 'standard', name: 'Standard (8")', penalty: 0, reason: 'Optimal size for tool access' },
+  large: { id: 'large', name: 'Large (10")', penalty: 5, reason: 'Larger than needed - harder to cap securely' }
+};
+
+// ============================================================================
 // SITE MAP DATA - 2D Floor Plans for Navigation
 // ============================================================================
 
@@ -2441,7 +2572,10 @@ const initialState = {
   currentLocation: null, // Current area id
   visitedAreas: {}, // { areaId: true }
   discoveredInfo: {}, // { areaId: info string }
-  currentFloor: 1 // For courthouse multi-floor navigation
+  currentFloor: 1, // For courthouse multi-floor navigation
+  // Access cutting state
+  accessCuts: [], // Array of { id, location, type, size, lined, linedDuctHandled, capped }
+  accessCuttingComplete: false
 };
 
 function gameReducer(state, action) {
@@ -2590,6 +2724,37 @@ function gameReducer(state, action) {
       };
     case 'COMPLETE_SITE_MAP':
       return { ...state, siteMapCompleted: true };
+    // Access cutting actions
+    case 'ADD_ACCESS_CUT': {
+      const newCut = {
+        id: action.id,
+        location: action.location,
+        name: action.name,
+        type: action.cutType, // circular or rectangular
+        size: action.size, // small, standard, large
+        lined: action.lined || false,
+        linedDuctHandled: action.linedDuctHandled || false,
+        capped: false,
+        position: action.position, // upstream or downstream
+        purpose: action.purpose // whip or vacuum
+      };
+      return {
+        ...state,
+        accessCuts: [...state.accessCuts, newCut]
+      };
+    }
+    case 'COMPLETE_ACCESS_CUTTING':
+      return { ...state, accessCuttingComplete: true };
+    case 'CAP_ACCESS_CUT': {
+      const updatedCuts = state.accessCuts.map(cut =>
+        cut.id === action.cutId ? { ...cut, capped: true } : cut
+      );
+      return { ...state, accessCuts: updatedCuts };
+    }
+    case 'CAP_ALL_CUTS': {
+      const allCapped = state.accessCuts.map(cut => ({ ...cut, capped: true }));
+      return { ...state, accessCuts: allCapped };
+    }
     // Multi-day courthouse actions
     case 'START_DAY_END': {
       // Save current day's progress before transitioning
@@ -4107,7 +4272,437 @@ function HazardCheck({ state, dispatch }) {
 }
 
 // ============================================================================
-// PHASE 3: SETUP
+// PHASE 3: SETUP - ACCESS CUTTING
+// ============================================================================
+
+function AccessCutting({ state, dispatch }) {
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [cutStep, setCutStep] = useState('select_location'); // select_location, select_type, lined_step, select_size, confirm
+  const [selectedCutType, setSelectedCutType] = useState(null);
+  const [linedHandled, setLinedHandled] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('standard');
+  const [showResult, setShowResult] = useState(false);
+  const [resultMessage, setResultMessage] = useState(null);
+
+  const scenario = DUCT_ACCESS_SCENARIOS[state.scenario];
+  const layout = scenario.layout;
+  const accessPoints = scenario.accessPoints;
+  const cutsNeeded = scenario.minCutsRequired;
+  const currentCuts = state.accessCuts;
+  const cutIds = currentCuts.map(c => c.id);
+
+  // Check if we have minimum cuts and at least one upstream (whip) and one downstream (vacuum)
+  const hasUpstream = currentCuts.some(c => c.position === 'upstream');
+  const hasDownstream = currentCuts.some(c => c.position === 'downstream');
+  const meetsMinimum = currentCuts.length >= cutsNeeded && hasUpstream && hasDownstream;
+
+  const handleSelectPoint = (point) => {
+    if (cutIds.includes(point.id)) return; // Already cut
+    setSelectedPoint(point);
+    setCutStep('select_type');
+  };
+
+  const handleSelectCutType = (type) => {
+    setSelectedCutType(type);
+    if (selectedPoint.lined) {
+      setCutStep('lined_step');
+    } else {
+      setCutStep('select_size');
+    }
+  };
+
+  const handleLinedStep = (cutInsulationFirst) => {
+    setLinedHandled(cutInsulationFirst);
+    if (!cutInsulationFirst) {
+      // Wrong sequence - penalty
+      dispatch({ type: 'ADD_PENALTY', reason: 'Insulation damage - cut metal before insulation', points: 15 });
+      setResultMessage({ success: false, text: 'Insulation damage! You must cut the insulation square FIRST with a utility knife, THEN cut the metal.' });
+      setShowResult(true);
+      setTimeout(() => {
+        setShowResult(false);
+        setCutStep('select_size');
+      }, 2500);
+    } else {
+      // Correct sequence - bonus
+      dispatch({ type: 'ADD_BONUS', reason: 'Proper lined duct cutting sequence', points: 5 });
+      setCutStep('select_size');
+    }
+  };
+
+  const handleSelectSize = (size) => {
+    setSelectedSize(size);
+    setCutStep('confirm');
+  };
+
+  const handleConfirmCut = () => {
+    const sizeData = ACCESS_CUT_SIZES[selectedSize];
+
+    // Apply size penalty if any
+    if (sizeData.penalty > 0) {
+      dispatch({ type: 'ADD_PENALTY', reason: sizeData.reason, points: sizeData.penalty });
+    }
+
+    // Add the cut
+    dispatch({
+      type: 'ADD_ACCESS_CUT',
+      id: selectedPoint.id,
+      location: selectedPoint.id,
+      name: selectedPoint.name,
+      cutType: selectedCutType,
+      size: selectedSize,
+      lined: selectedPoint.lined || false,
+      linedDuctHandled: linedHandled,
+      position: selectedPoint.position,
+      purpose: selectedPoint.purpose
+    });
+
+    // Show result and reset
+    const isOptimal = scenario.optimalCuts.includes(selectedPoint.id);
+    setResultMessage({
+      success: true,
+      text: isOptimal
+        ? `Cut complete at ${selectedPoint.name}. Good positioning for ${selectedPoint.purpose === 'whip' ? 'whip insertion' : 'vacuum connection'}!`
+        : `Cut complete at ${selectedPoint.name}. This location works but may not be optimal.`
+    });
+    setShowResult(true);
+
+    setTimeout(() => {
+      setShowResult(false);
+      setSelectedPoint(null);
+      setCutStep('select_location');
+      setSelectedCutType(null);
+      setLinedHandled(false);
+      setSelectedSize('standard');
+    }, 2000);
+  };
+
+  const handleComplete = () => {
+    // Check for efficiency bonus
+    const optimalCutsMade = currentCuts.filter(c => scenario.optimalCuts.includes(c.id)).length;
+    if (optimalCutsMade === scenario.optimalCuts.length && currentCuts.length === scenario.minCutsRequired) {
+      dispatch({ type: 'ADD_BONUS', reason: 'Optimal access cut placement - minimum cuts for full coverage', points: 5 });
+    } else if (currentCuts.length > scenario.minCutsRequired) {
+      const extraCuts = currentCuts.length - scenario.minCutsRequired;
+      dispatch({ type: 'ADD_PENALTY', reason: `${extraCuts} unnecessary cut(s) - more holes to cap`, points: extraCuts * 3 });
+    }
+
+    dispatch({ type: 'COMPLETE_ACCESS_CUTTING' });
+    dispatch({ type: 'SET_SUBPHASE', subPhase: 1 });
+  };
+
+  const getMaterialColor = (material) => {
+    const colors = {
+      rigid: '#64748b',
+      flex: '#fbbf24',
+      lined: '#34d399',
+      ductboard: '#a78bfa'
+    };
+    return colors[material] || '#64748b';
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-yellow-400 font-bold">⭕ Access Cutting</h3>
+            <p className="text-zinc-400 text-sm mt-1">{scenario.name}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-zinc-300">Cuts: <span className={currentCuts.length >= cutsNeeded ? 'text-green-400' : 'text-yellow-400'}>{currentCuts.length}</span> / {cutsNeeded} min</p>
+            <div className="flex gap-2 mt-1 text-xs">
+              <span className={hasUpstream ? 'text-green-400' : 'text-zinc-500'}>Whip access: {hasUpstream ? '✓' : '○'}</span>
+              <span className={hasDownstream ? 'text-green-400' : 'text-zinc-500'}>Vacuum: {hasDownstream ? '✓' : '○'}</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-zinc-500 text-sm">{scenario.description}</p>
+        {scenario.specialNote && (
+          <p className="text-orange-400 text-xs mt-2">{scenario.specialNote}</p>
+        )}
+      </div>
+
+      {/* 2D Duct Layout */}
+      <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
+        <h4 className="text-zinc-400 text-sm font-bold mb-3">Duct System Layout - Click to select cut location</h4>
+        <div
+          className="relative bg-zinc-950 rounded border border-zinc-800 mx-auto overflow-hidden"
+          style={{ width: Math.min(layout.width, 480), height: Math.min(layout.height, 320) }}
+        >
+          {/* Air Handler */}
+          <div
+            className="absolute bg-red-900/50 border-2 border-red-500 rounded flex items-center justify-center text-xs text-red-300 font-bold"
+            style={{
+              left: layout.airHandler.x * (Math.min(layout.width, 480) / layout.width),
+              top: layout.airHandler.y * (Math.min(layout.height, 320) / layout.height),
+              width: layout.airHandler.width * (Math.min(layout.width, 480) / layout.width),
+              height: layout.airHandler.height * (Math.min(layout.height, 320) / layout.height)
+            }}
+          >
+            {layout.airHandler.label || 'AHU'}
+          </div>
+
+          {/* Main Trunk */}
+          <div
+            className="absolute rounded"
+            style={{
+              left: layout.trunk.x * (Math.min(layout.width, 480) / layout.width),
+              top: layout.trunk.y * (Math.min(layout.height, 320) / layout.height),
+              width: layout.trunk.width * (Math.min(layout.width, 480) / layout.width),
+              height: layout.trunk.height * (Math.min(layout.height, 320) / layout.height),
+              backgroundColor: getMaterialColor(layout.trunk.material || 'rigid'),
+              opacity: 0.7
+            }}
+          />
+
+          {/* Branch Ducts */}
+          {layout.branches.map((branch, i) => (
+            <div
+              key={branch.id}
+              className="absolute rounded"
+              style={{
+                left: branch.x * (Math.min(layout.width, 480) / layout.width) - 4,
+                top: branch.y * (Math.min(layout.height, 320) / layout.height),
+                width: 8,
+                height: (branch.toY - branch.y) * (Math.min(layout.height, 320) / layout.height),
+                backgroundColor: getMaterialColor(branch.material),
+                opacity: 0.7
+              }}
+            >
+              <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] text-zinc-500 whitespace-nowrap">
+                {branch.name}
+              </span>
+            </div>
+          ))}
+
+          {/* Access Points */}
+          {accessPoints.map((point) => {
+            const isCut = cutIds.includes(point.id);
+            const isSelected = selectedPoint?.id === point.id;
+            const scaleX = Math.min(layout.width, 480) / layout.width;
+            const scaleY = Math.min(layout.height, 320) / layout.height;
+
+            return (
+              <button
+                key={point.id}
+                onClick={() => !isCut && handleSelectPoint(point)}
+                disabled={isCut || showResult}
+                className={`absolute w-6 h-6 rounded-full border-2 transform -translate-x-1/2 -translate-y-1/2 transition-all text-xs font-bold ${
+                  isCut
+                    ? 'bg-green-600 border-green-400 text-white cursor-default'
+                    : isSelected
+                      ? 'bg-yellow-500 border-yellow-300 text-zinc-900 scale-125 z-10'
+                      : point.recommended
+                        ? 'bg-blue-600/50 border-blue-400 text-blue-200 hover:bg-blue-500 hover:scale-110 cursor-pointer'
+                        : 'bg-zinc-600/50 border-zinc-400 text-zinc-300 hover:bg-zinc-500 hover:scale-110 cursor-pointer'
+                }`}
+                style={{
+                  left: point.x * scaleX,
+                  top: point.y * scaleY
+                }}
+                title={`${point.name} (${point.position} - ${point.purpose})${point.lined ? ' - LINED' : ''}`}
+              >
+                {isCut ? '✓' : point.purpose === 'whip' ? 'W' : 'V'}
+              </button>
+            );
+          })}
+
+          {/* Legend */}
+          <div className="absolute bottom-1 right-1 bg-zinc-900/90 p-1 rounded text-[8px] space-y-0.5">
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span className="text-zinc-400">Recommended</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-zinc-500"></span>
+              <span className="text-zinc-400">Optional</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-blue-300">W</span>
+              <span className="text-zinc-400">= Whip</span>
+              <span className="text-blue-300 ml-1">V</span>
+              <span className="text-zinc-400">= Vacuum</span>
+            </div>
+          </div>
+
+          {/* Material Legend */}
+          <div className="absolute bottom-1 left-1 bg-zinc-900/90 p-1 rounded text-[8px] space-y-0.5">
+            <div className="flex items-center gap-1"><span className="w-3 h-1" style={{backgroundColor: '#64748b'}}></span><span className="text-zinc-400">Rigid</span></div>
+            <div className="flex items-center gap-1"><span className="w-3 h-1" style={{backgroundColor: '#34d399'}}></span><span className="text-zinc-400">Lined</span></div>
+            <div className="flex items-center gap-1"><span className="w-3 h-1" style={{backgroundColor: '#fbbf24'}}></span><span className="text-zinc-400">Flex</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Cut Configuration Panel */}
+      {selectedPoint && !showResult && (
+        <div className="bg-zinc-800/50 border border-blue-500/30 rounded-lg p-4">
+          <h4 className="text-blue-400 font-bold mb-3">
+            Cutting: {selectedPoint.name}
+            {selectedPoint.lined && <span className="text-orange-400 ml-2">(LINED DUCT)</span>}
+          </h4>
+
+          {/* Step 1: Select Cut Type */}
+          {cutStep === 'select_type' && (
+            <div className="space-y-3">
+              <p className="text-zinc-400 text-sm">Select cut type:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.values(ACCESS_CUT_TYPES).map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => handleSelectCutType(type.id)}
+                    className="p-3 bg-zinc-900 border border-zinc-700 hover:border-blue-500 rounded text-left transition-all"
+                  >
+                    <span className="text-2xl">{type.icon}</span>
+                    <p className="text-zinc-200 font-medium mt-1">{type.name}</p>
+                    <p className="text-zinc-500 text-xs">Uses: {ACCESS_CUTTING_TOOLS[type.tool].name}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Lined Duct Handling */}
+          {cutStep === 'lined_step' && (
+            <div className="space-y-3">
+              <div className="p-3 bg-orange-900/30 border border-orange-500/50 rounded">
+                <p className="text-orange-400 font-bold">Lined Duct Detected</p>
+                <p className="text-zinc-300 text-sm mt-1">This duct has internal insulation liner. How do you proceed?</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  onClick={() => handleLinedStep(true)}
+                  className="p-3 bg-zinc-900 border border-green-500/50 hover:border-green-400 rounded text-left transition-all"
+                >
+                  <span className="text-xl">🔪</span>
+                  <span className="text-green-400 font-medium ml-2">Cut insulation square FIRST with utility knife, then cut metal</span>
+                  <p className="text-zinc-500 text-xs mt-1">Correct sequence - protects insulation integrity</p>
+                </button>
+                <button
+                  onClick={() => handleLinedStep(false)}
+                  className="p-3 bg-zinc-900 border border-red-500/50 hover:border-red-400 rounded text-left transition-all"
+                >
+                  <span className="text-xl">⭕</span>
+                  <span className="text-red-400 font-medium ml-2">Cut metal directly with hole cutter</span>
+                  <p className="text-zinc-500 text-xs mt-1">Faster approach</p>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Select Size */}
+          {cutStep === 'select_size' && (
+            <div className="space-y-3">
+              <p className="text-zinc-400 text-sm">Select cut size:</p>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.values(ACCESS_CUT_SIZES).map((size) => (
+                  <button
+                    key={size.id}
+                    onClick={() => handleSelectSize(size.id)}
+                    className={`p-3 bg-zinc-900 border rounded text-center transition-all ${
+                      size.id === 'standard'
+                        ? 'border-green-500/50 hover:border-green-400'
+                        : 'border-zinc-700 hover:border-yellow-500'
+                    }`}
+                  >
+                    <p className="text-zinc-200 font-medium">{size.name}</p>
+                    {size.penalty > 0 && <p className="text-orange-400 text-xs mt-1">-{size.penalty} pts</p>}
+                    {size.penalty === 0 && <p className="text-green-400 text-xs mt-1">Optimal</p>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Confirm */}
+          {cutStep === 'confirm' && (
+            <div className="space-y-3">
+              <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+                <p className="text-zinc-300">Cut Summary:</p>
+                <ul className="text-sm text-zinc-400 mt-2 space-y-1">
+                  <li>Location: <span className="text-zinc-200">{selectedPoint.name}</span></li>
+                  <li>Type: <span className="text-zinc-200">{ACCESS_CUT_TYPES[selectedCutType].name}</span></li>
+                  <li>Size: <span className="text-zinc-200">{ACCESS_CUT_SIZES[selectedSize].name}</span></li>
+                  <li>Position: <span className="text-zinc-200">{selectedPoint.position} ({selectedPoint.purpose})</span></li>
+                  {selectedPoint.lined && (
+                    <li>Lined handling: <span className={linedHandled ? 'text-green-400' : 'text-red-400'}>
+                      {linedHandled ? 'Insulation first ✓' : 'Skipped (damaged)'}
+                    </span></li>
+                  )}
+                </ul>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedPoint(null);
+                    setCutStep('select_location');
+                    setSelectedCutType(null);
+                    setLinedHandled(false);
+                    setSelectedSize('standard');
+                  }}
+                  className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmCut}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-all"
+                >
+                  Make Cut
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Result Message */}
+      {showResult && resultMessage && (
+        <div className={`p-4 rounded-lg border-2 ${resultMessage.success ? 'bg-green-900/30 border-green-500' : 'bg-red-900/30 border-red-500'}`}>
+          <p className={resultMessage.success ? 'text-green-400' : 'text-red-400'}>{resultMessage.text}</p>
+        </div>
+      )}
+
+      {/* Cuts Made Summary */}
+      {currentCuts.length > 0 && (
+        <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-700">
+          <h4 className="text-zinc-400 font-bold mb-2">Access Cuts Made ({currentCuts.length})</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {currentCuts.map((cut) => (
+              <div key={cut.id} className="flex items-center gap-2 p-2 bg-zinc-800 rounded text-sm">
+                <span className="text-green-400">✓</span>
+                <span className="text-zinc-300">{cut.name}</span>
+                <span className="text-zinc-500 text-xs">({cut.position})</span>
+                {cut.lined && (
+                  <span className={cut.linedDuctHandled ? 'text-green-400 text-xs' : 'text-red-400 text-xs'}>
+                    {cut.linedDuctHandled ? 'Lined OK' : 'Damaged'}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Complete Button */}
+      <button
+        onClick={handleComplete}
+        disabled={!meetsMinimum || showResult}
+        className={`w-full py-3 font-bold rounded transition-all ${
+          meetsMinimum && !showResult
+            ? 'bg-green-600 hover:bg-green-500 text-white'
+            : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+        }`}
+      >
+        {meetsMinimum ? 'Complete Access Cutting →' : `Need ${cutsNeeded - currentCuts.length} more cut(s) (whip + vacuum required)`}
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// PHASE 3: SETUP - POWER & REGISTERS
 // ============================================================================
 
 function PowerSetup({ state, dispatch }) {
@@ -4137,11 +4732,11 @@ function PowerSetup({ state, dispatch }) {
     }
     dispatch({ type: 'CONNECT_POWER' });
     setResolved(true);
-    setTimeout(() => dispatch({ type: 'SET_SUBPHASE', subPhase: 1 }), 1500);
+    setTimeout(() => dispatch({ type: 'SET_SUBPHASE', subPhase: 2 }), 1500);
   };
-  
+
   if (!scenario) return null;
-  
+
   return (
     <div className="space-y-4">
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
@@ -5653,8 +6248,29 @@ function DayStartPhase({ state, dispatch }) {
 }
 
 function CompletionPhase({ state, dispatch }) {
-  const [subPhase, setSubPhase] = useState('photos'); // 'photos', 'walkthrough', 'complete'
+  const [subPhase, setSubPhase] = useState(state.accessCuts.length > 0 ? 'cap_cuts' : 'photos'); // 'cap_cuts', 'photos', 'walkthrough', 'complete'
   const [walkthroughDone, setWalkthroughDone] = useState(false);
+  const [cappingComplete, setCappingComplete] = useState(false);
+
+  const uncappedCuts = state.accessCuts.filter(c => !c.capped);
+  const allCutsCapped = uncappedCuts.length === 0;
+
+  const handleCapCut = (cutId) => {
+    dispatch({ type: 'CAP_ACCESS_CUT', cutId });
+  };
+
+  const handleCapAllCuts = () => {
+    dispatch({ type: 'CAP_ALL_CUTS' });
+    dispatch({ type: 'ADD_BONUS', reason: 'All access holes properly capped', points: 3 });
+    setCappingComplete(true);
+    setTimeout(() => setSubPhase('photos'), 1500);
+  };
+
+  const handleSkipCapping = () => {
+    const uncappedCount = uncappedCuts.length;
+    dispatch({ type: 'ADD_PENALTY', reason: `${uncappedCount} access hole(s) left uncapped`, points: uncappedCount * 10 });
+    setSubPhase('photos');
+  };
 
   const handlePhotosDone = () => {
     setSubPhase('walkthrough');
@@ -5677,6 +6293,77 @@ function CompletionPhase({ state, dispatch }) {
     dispatch({ type: 'COMPLETE_JOB' });
   };
 
+  // Access cut capping phase
+  if (subPhase === 'cap_cuts' && !cappingComplete) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+          <h3 className="text-yellow-400 font-bold mb-4">⭕ Cap Access Holes</h3>
+          <p className="text-zinc-400 text-sm mb-4">
+            All access holes must be capped with proper access panels before job completion.
+          </p>
+
+          <div className="space-y-2">
+            {state.accessCuts.map((cut) => (
+              <div
+                key={cut.id}
+                className={`p-3 rounded-lg border-2 flex items-center justify-between ${
+                  cut.capped ? 'bg-green-900/30 border-green-500' : 'bg-zinc-900 border-zinc-700'
+                }`}
+              >
+                <div>
+                  <p className={cut.capped ? 'text-green-400 font-medium' : 'text-zinc-200 font-medium'}>
+                    {cut.capped ? '✓ ' : '○ '}{cut.name}
+                  </p>
+                  <p className="text-zinc-500 text-xs">
+                    {cut.type === 'circular' ? '8" Circular' : 'Rectangular'} • {cut.position}
+                    {cut.lined && <span className="text-orange-400 ml-1">(lined)</span>}
+                  </p>
+                </div>
+                {!cut.capped && (
+                  <button
+                    onClick={() => handleCapCut(cut.id)}
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded transition-all"
+                  >
+                    Install Cap
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            {!allCutsCapped && (
+              <button
+                onClick={handleCapAllCuts}
+                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all"
+              >
+                Cap All Remaining (+3 pts)
+              </button>
+            )}
+            {allCutsCapped && (
+              <button
+                onClick={() => {
+                  dispatch({ type: 'ADD_BONUS', reason: 'All access holes properly capped', points: 3 });
+                  setSubPhase('photos');
+                }}
+                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all"
+              >
+                Continue to Photos →
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleSkipCapping}
+            className="w-full mt-2 py-2 text-sm text-zinc-500 hover:text-red-400 transition-all"
+          >
+            Skip capping (-10 pts per hole)
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Photo documentation phase
   if (subPhase === 'photos' && !state.photosDocumented) {
     return (
@@ -5698,12 +6385,28 @@ function CompletionPhase({ state, dispatch }) {
   }
 
   // Final completion screen
+  const allAccessCapped = state.accessCuts.every(c => c.capped);
+
   return (
     <div className="space-y-4">
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
         <h3 className="text-yellow-400 font-bold mb-4">✅ Job Completion Checklist</h3>
 
         <div className="space-y-3">
+          {/* Access holes status (if any were made) */}
+          {state.accessCuts.length > 0 && (
+            <div className={`p-4 rounded-lg border-2 ${allAccessCapped ? 'bg-green-900/30 border-green-500' : 'bg-red-900/30 border-red-500'}`}>
+              <p className={allAccessCapped ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+                ⭕ {allAccessCapped ? 'Access Holes Capped' : 'Uncapped Access Holes!'}
+              </p>
+              <p className="text-zinc-400 text-sm">
+                {allAccessCapped
+                  ? `${state.accessCuts.length} access hole(s) properly capped with panels`
+                  : `${state.accessCuts.filter(c => !c.capped).length} hole(s) left uncapped`}
+              </p>
+            </div>
+          )}
+
           {/* Photos status */}
           <div className={`p-4 rounded-lg border-2 ${state.photosDocumented ? 'bg-green-900/30 border-green-500' : 'bg-orange-900/30 border-orange-500'}`}>
             <p className={state.photosDocumented ? 'text-green-400 font-bold' : 'text-orange-400 font-bold'}>
@@ -6008,9 +6711,10 @@ export default function DuctCleaningSimulator() {
         return (
           <div className="max-w-4xl mx-auto">
             <PhaseHeader phase={state.phase} scenario={state.scenario} currentDay={state.currentDay} totalDays={state.totalDays} />
-            <h2 className="text-xl font-bold text-zinc-200 mb-4">Phase 3: Setup & Register Removal</h2>
-            {state.subPhase === 0 && <PowerSetup state={state} dispatch={dispatch} />}
-            {state.subPhase === 1 && <RegisterRemoval state={state} dispatch={dispatch} />}
+            <h2 className="text-xl font-bold text-zinc-200 mb-4">Phase 3: Setup</h2>
+            {state.subPhase === 0 && <AccessCutting state={state} dispatch={dispatch} />}
+            {state.subPhase === 1 && <PowerSetup state={state} dispatch={dispatch} />}
+            {state.subPhase === 2 && <RegisterRemoval state={state} dispatch={dispatch} />}
           </div>
         );
       case 4:
