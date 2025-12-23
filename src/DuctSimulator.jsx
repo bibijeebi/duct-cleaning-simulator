@@ -27,13 +27,15 @@ const SCENARIOS = {
   },
   courthouse: {
     id: 'courthouse',
-    name: 'Institutional (Courthouse)',
+    name: 'Durham County Courthouse',
     difficulty: 'Advanced',
     icon: '🏛️',
-    description: 'Multi-floor building with PTAC/fan coil units throughout',
+    description: '1950s historic building, 47 wall-mounted PTAC units across 3 floors. Asbestos protocols required.',
     systemType: 'ptac',
     estimatedTime: '2-3 days',
-    unlocked: true
+    unlocked: true,
+    crewSize: '4-6 (Jeff, Thomas, Andrew, Nate, Jack, Bryson)',
+    specialNote: 'Based on real job at Durham County Courthouse'
   }
 };
 
@@ -69,13 +71,22 @@ const JOB_TICKETS = {
     customer: 'Durham County Facilities',
     contactName: 'Jeff Martinez - Facilities Manager',
     phone: '(919) 555-0391',
-    system: 'PTAC/Fan Coil - 47 units across 3 floors',
+    system: 'PTAC/Fan Coil - 47 wall-mounted units across 3 floors',
     sqft: '45,000',
-    notes: 'Historic courthouse building. Work in phases by floor. Coordinate with building security. Some offices occupied during work - minimize disruption. Church Street Garage for parking ($9/day).',
+    notes: 'Historic building, 1950s construction - asbestos protocols required. Work in phases by floor. Coordinate with building security. Some offices occupied during work - minimize disruption.',
     estimatedTime: '2-3 days',
     mapDistance: '15 miles',
-    parking: 'Church Street Garage - $9 daily, walking distance',
-    specialConsiderations: ['Multi-day job', 'Security escort required', '47 individual units', 'Occupied building - noise concerns', 'Historic building - extra care required', 'Crew of 4-6 recommended']
+    parking: 'Church Street Garage - $9/day, 2 blocks walking. Third van (equipment trailer) may need separate parking arrangements.',
+    specialConsiderations: [
+      'Multi-day job - 3 days minimum',
+      'Security escort required for Floor 3',
+      '47 individual PTAC units (wall-mounted, hotel-style)',
+      'Occupied building - work around court schedules',
+      'Historic 1950s building - asbestos suspect material likely',
+      'Lined ductwork throughout - short runs to PTAC units',
+      'Portable vacuum preferred over truck (short duct runs)',
+      'Crew of 4-6 recommended'
+    ]
   }
 };
 
@@ -96,6 +107,82 @@ const SCENARIO_EQUIPMENT = {
   courthouse: {
     multiUnit: { name: 'Multi-Unit Setup', items: ['PTAC cleaning kit', 'Coil cleaner', 'Drain pan tablets', 'Filter stock (various sizes)'], penalty: 'delay', penaltyText: 'Multiple hardware runs' },
     crew: { name: 'Crew Coordination', items: ['Radio set', 'Floor assignments', 'Master key/badge'], penalty: 'delay', penaltyText: 'Inefficient crew deployment' }
+  }
+};
+
+// Courthouse crew members - real crew assignments
+const COURTHOUSE_CREW = {
+  jeff: {
+    id: 'jeff',
+    name: 'Jeff',
+    role: 'Lead / Point Man',
+    assignment: 'Runs point, coordinates with facilities',
+    icon: '👷',
+    dialogue: [
+      "Thomas and Andrew are handling Floor 2 courtrooms - we'll hit Floor 3 after lunch.",
+      "Nate, you're with me on Floor 1. Jack and Bryson, start prepping equipment.",
+      "Check in with security before you head up - they're strict about Floor 3 access."
+    ]
+  },
+  thomas: {
+    id: 'thomas',
+    name: 'Thomas',
+    role: 'Floor 2 Lead',
+    assignment: 'Floor 2 courtrooms and chambers',
+    icon: '🔧',
+    dialogue: [
+      "Andrew, start on Courtroom C. I'll handle the judge chambers.",
+      "Court's in session in Room B - we'll circle back during recess.",
+      "Watch the historic fixtures in here - don't scratch anything."
+    ]
+  },
+  andrew: {
+    id: 'andrew',
+    name: 'Andrew',
+    role: 'Floor 2 Support',
+    assignment: 'Floor 2 with Thomas',
+    icon: '🛠️',
+    dialogue: [
+      "Courtroom C is clear - moving to conference rooms.",
+      "Thomas, got some white putty on this joint. Flagging it.",
+      "Judge's assistant wants to know when we'll be done in chambers."
+    ]
+  },
+  nate: {
+    id: 'nate',
+    name: 'Nate',
+    role: 'Rotating',
+    assignment: 'Floor 1 with Jeff / rotating support',
+    icon: '👨‍🔧',
+    dialogue: [
+      "Clerk offices are done. Moving to the public areas.",
+      "Security's asking for our sign-out time.",
+      "Jeff, the portable's running low on suction - filter check?"
+    ]
+  },
+  jack: {
+    id: 'jack',
+    name: 'Jack',
+    role: 'Rotating',
+    assignment: 'Equipment prep / rotating support',
+    icon: '🧰',
+    dialogue: [
+      "Equipment's staged in the stairwell.",
+      "Got the PTAC filters sorted by size - ready for Floor 3.",
+      "Bryson, hand me the coil cleaner."
+    ]
+  },
+  bryson: {
+    id: 'bryson',
+    name: 'Bryson',
+    role: 'Rotating',
+    assignment: 'Equipment prep / rotating support',
+    icon: '📦',
+    dialogue: [
+      "Third van's parked on the street - trailer wouldn't fit in the garage.",
+      "Filter stock is running low. Might need a supply run tomorrow.",
+      "Jack, you seen the drain pan tablets?"
+    ]
   }
 };
 
@@ -996,17 +1083,21 @@ const SCENARIO_DUCTS = {
     { id: 'rtu_return', name: 'RTU Return Plenum', material: 'lined', length: '8ft', type: 'plenum' }
   ],
   courthouse: [
-    { id: 'floor1_main', name: 'Floor 1 - Main Corridor', material: 'rigid', length: '120ft', type: 'trunk' },
-    { id: 'floor1_court1', name: 'Floor 1 - Courtroom A', material: 'lined', length: '45ft', type: 'supply' },
-    { id: 'floor1_court2', name: 'Floor 1 - Courtroom B', material: 'lined', length: '45ft', type: 'supply' },
-    { id: 'floor1_offices', name: 'Floor 1 - Clerk Offices', material: 'rigid', length: '60ft', type: 'supply' },
-    { id: 'floor2_main', name: 'Floor 2 - Main Corridor', material: 'rigid', length: '120ft', type: 'trunk' },
-    { id: 'floor2_court3', name: 'Floor 2 - Courtroom C', material: 'lined', length: '50ft', type: 'supply' },
-    { id: 'floor2_judges', name: 'Floor 2 - Judge Chambers', material: 'ductboard', length: '80ft', type: 'supply' },
-    { id: 'floor3_main', name: 'Floor 3 - Main Corridor', material: 'rigid', length: '110ft', type: 'trunk' },
-    { id: 'floor3_admin', name: 'Floor 3 - Admin Offices', material: 'rigid', length: '90ft', type: 'supply' },
-    { id: 'floor3_records', name: 'Floor 3 - Records Room', material: 'ductboard', length: '40ft', type: 'supply' },
-    { id: 'ptac_units', name: 'PTAC Units (47 total)', material: 'rigid', length: 'Various', type: 'unit' }
+    // Floor 1 - Clerk offices, public areas
+    { id: 'floor1_main', name: 'Floor 1 - Main Corridor', material: 'lined', length: '120ft', type: 'trunk', note: 'Lined ductwork - 1950s construction' },
+    { id: 'floor1_court1', name: 'Floor 1 - Public Area A', material: 'lined', length: '45ft', type: 'supply' },
+    { id: 'floor1_court2', name: 'Floor 1 - Public Area B', material: 'lined', length: '45ft', type: 'supply' },
+    { id: 'floor1_offices', name: 'Floor 1 - Clerk Offices', material: 'lined', length: '60ft', type: 'supply', note: 'High foot traffic area' },
+    // Floor 2 - Courtrooms
+    { id: 'floor2_main', name: 'Floor 2 - Main Corridor', material: 'lined', length: '120ft', type: 'trunk', note: 'Thomas and Andrew assigned' },
+    { id: 'floor2_court3', name: 'Floor 2 - Courtroom C', material: 'lined', length: '50ft', type: 'supply', note: 'Work around court schedule' },
+    { id: 'floor2_judges', name: 'Floor 2 - Courtrooms A & B', material: 'lined', length: '80ft', type: 'supply', note: 'Historic brass grilles' },
+    // Floor 3 - Judge chambers, records (restricted)
+    { id: 'floor3_main', name: 'Floor 3 - Main Corridor', material: 'lined', length: '110ft', type: 'trunk', note: 'Security escort required' },
+    { id: 'floor3_admin', name: 'Floor 3 - Judge Chambers', material: 'lined', length: '90ft', type: 'supply', note: 'Schedule varies - check with assistant' },
+    { id: 'floor3_records', name: 'Floor 3 - Records Room', material: 'ductboard', length: '40ft', type: 'supply', note: 'Cover EVERYTHING with plastic' },
+    // PTAC Units - wall-mounted throughout
+    { id: 'ptac_units', name: 'PTAC Units (47 wall-mounted)', material: 'lined', length: '8-15ft runs', type: 'ptac', note: 'Hotel-style units, short duct runs - portable vacuum preferred' }
   ]
 };
 
@@ -1101,9 +1192,16 @@ const DUCT_ACCESS_SCENARIOS = {
     optimalCuts: ['rtu_port', 'trunk_mid', 'office_access']
   },
   courthouse: {
-    name: 'Institutional PTAC System',
-    description: 'Historic building with lined ductwork. 8" circular access holes, whip toward PTAC units.',
+    name: 'Durham County Courthouse - PTAC System',
+    description: '1950s historic building with wall-mounted PTAC units (hotel-style). Short duct runs to each unit. Lined ductwork throughout. Portable vacuum preferred over truck - short runs make it more effective.',
     requiresLinedCutting: true,
+    ptacDetails: {
+      type: 'Wall-mounted (hotel-style)',
+      count: 47,
+      ductRuns: 'Short runs (8-15ft per unit)',
+      vacuumNote: 'Portable vacuum works better than truck for short runs',
+      liningNote: 'Lined ductwork throughout - insulation-first cuts required'
+    },
     layout: {
       width: 480,
       height: 320,
@@ -1126,7 +1224,8 @@ const DUCT_ACCESS_SCENARIOS = {
     ],
     minCutsRequired: 3,
     optimalCuts: ['ptac_access', 'trunk_courtA', 'trunk_end'],
-    specialNote: 'Durham County Courthouse: Lined ductwork requires insulation-first cuts. Use 8" circular access holes. Whip fishes toward PTAC units.'
+    specialNote: 'Durham County Courthouse (1950s): Lined ductwork requires insulation-first cuts. 8" circular access holes. Whip toward PTAC units. HIGH asbestos probability - white putty at joints common. Notify Jeff Martinez if suspect material found.',
+    asbestosWarning: true
   }
 };
 
@@ -2045,24 +2144,43 @@ const SITE_MAPS = {
 const COURTHOUSE_FLOORS = {
   1: {
     name: 'Floor 1 - Ground Level',
-    description: 'Main entrance, Courtrooms A & B, Clerk offices',
+    description: 'Clerk offices, public areas, main lobby. High foot traffic zone.',
     ductPrefix: 'floor1_',
     ptacCount: 16,
-    challenges: ['High foot traffic', 'Active courtrooms', 'Security screening area']
+    challenges: [
+      'High foot traffic - work around public hours',
+      'Security screening area - coordinate with deputies',
+      'Clerk offices occupied - minimize disruption',
+      'Thomas and Andrew handling Floor 2 while we work here'
+    ],
+    crewAssignment: 'Jeff runs point, Nate on support'
   },
   2: {
     name: 'Floor 2 - Courtrooms',
-    description: 'Courtroom C, Judge chambers, Conference rooms',
+    description: 'Courtrooms A, B, C. Work around court schedules - check session times.',
     ductPrefix: 'floor2_',
     ptacCount: 15,
-    challenges: ['Judge schedules vary', 'Quiet zones required', 'Historic fixtures']
+    challenges: [
+      'Court in session - wait for recess',
+      'Quiet zones required during proceedings',
+      'Historic fixtures - document before touching',
+      'Judge Williams strict about noise levels'
+    ],
+    crewAssignment: 'Thomas (lead), Andrew on support'
   },
   3: {
-    name: 'Floor 3 - Administration',
-    description: 'Admin offices, Records room, IT department',
+    name: 'Floor 3 - Restricted',
+    description: 'Judge chambers, records room, admin offices. Security escort required.',
     ductPrefix: 'floor3_',
     ptacCount: 16,
-    challenges: ['Records require dust protection', 'Server room - temperature sensitive', 'Less security escort needed']
+    challenges: [
+      'Security escort required at all times',
+      'Judge chambers - schedule varies, check with assistant',
+      'Records room - cover EVERYTHING with plastic',
+      'PTAC units throughout - short duct runs',
+      'Asbestos-suspect material likely (1950s construction)'
+    ],
+    crewAssignment: 'Full crew - Jack and Bryson prep PTAC filters'
   }
 };
 
@@ -2070,20 +2188,95 @@ const DAY_START_EVENTS = {
   returning_crew: [
     { id: 'fast_checkin', text: "Security remembers you from yesterday - faster check-in today.", bonus: 2, type: 'positive' },
     { id: 'equipment_where', text: "Your equipment is right where you left it in the staging area.", bonus: 0, type: 'neutral' },
-    { id: 'morning_coffee', text: "Jeff from Facilities brings coffee. 'Heard good things about yesterday's work.'", bonus: 3, type: 'positive' }
+    { id: 'morning_coffee', text: "Jeff Martinez from Facilities brought coffee for the crew. 'Heard good things about yesterday's work.'", bonus: 3, type: 'positive' },
+    { id: 'badges_ready', text: "Security has your badges ready. 'You guys are becoming regulars around here.'", bonus: 1, type: 'positive' }
   ],
   callbacks: [
     { id: 'register_callback', text: "Jeff: 'That register you flagged yesterday in Courtroom A - can you take another look? Judge noticed a rattle.'", task: 'reinspect_register', floor: 1 },
     { id: 'airflow_question', text: "Clerk from Floor 1: 'The air feels different today - in a good way! What did you do?'", task: 'explain_work', floor: 1 },
     { id: 'noise_complaint', text: "Security: 'Got a complaint about noise from yesterday. Judge Williams wasn't happy.'", penalty: 5, type: 'negative' },
-    { id: 'dust_followup', text: "Jeff: 'Admin on Floor 2 said there was some dust on their desks. Did we miss covering something?'", task: 'apologize', penalty: 3 }
+    { id: 'dust_followup', text: "Jeff: 'Admin on Floor 2 said there was some dust on their desks. Did we miss covering something?'", task: 'apologize', penalty: 3 },
+    { id: 'ptac_rattle', text: "Judge's assistant: 'That PTAC unit you cleaned yesterday - it's quieter! The judge noticed.'", bonus: 2, type: 'positive' }
   ],
   morning_briefing: [
     { id: 'schedule_change', text: "Court schedule changed - Courtroom C has a trial starting at 10 AM instead of 2 PM.", impact: 'Must work around new schedule' },
     { id: 'vip_visit', text: "Heads up: County Commissioner touring the building at 2 PM. Look sharp.", impact: 'Extra scrutiny' },
-    { id: 'hvac_issue', text: "Overnight HVAC had issues on Floor 3. Might find more debris than expected.", impact: 'Extra cleaning needed' }
+    { id: 'hvac_issue', text: "Overnight HVAC had issues on Floor 3. Might find more debris than expected.", impact: 'Extra cleaning needed' },
+    { id: 'judge_schedule', text: "Judge Patterson out sick today - his chambers are clear for work.", impact: 'Bonus access time' }
   ]
 };
+
+// Random events that can occur during courthouse execution phase
+const COURTHOUSE_RANDOM_EVENTS = [
+  {
+    id: 'court_session_b',
+    text: "Court in session in Room B - wait for recess.",
+    type: 'delay',
+    waitTime: 45,
+    floor: 2,
+    resolution: "Bailiff signals recess at 10:30. You have 15 minutes."
+  },
+  {
+    id: 'security_escort_f3',
+    text: "Security needs to escort you to Floor 3. Deputy on the way.",
+    type: 'delay',
+    waitTime: 10,
+    floor: 3,
+    resolution: "Deputy arrives. 'Stay with me up there - restricted area.'"
+  },
+  {
+    id: 'facilities_coffee',
+    text: "Jeff Martinez brought coffee for the crew. Quick break.",
+    type: 'positive',
+    bonus: 2,
+    resolution: "'How's it going up here? Any issues I should know about?'"
+  },
+  {
+    id: 'judge_assistant',
+    text: "Judge's assistant asking how much longer in chambers.",
+    type: 'pressure',
+    floor: 3,
+    resolution: "You estimate 45 minutes. She nods. 'Judge has a 2 PM call.'"
+  },
+  {
+    id: 'white_putty',
+    text: "Found white putty at a duct joint. Building is 1950s - flag this.",
+    type: 'hazard',
+    critical: true,
+    resolution: "Document location, do not disturb. Notify Jeff Martinez."
+  },
+  {
+    id: 'historic_grille',
+    text: "Ornate brass grille - historic. Clerk says it's original 1950s.",
+    type: 'caution',
+    resolution: "Clean in place. Do NOT remove. Document condition first."
+  },
+  {
+    id: 'crew_check',
+    text: "Radio crackles: 'Jeff here. Thomas, how's Floor 2 looking?'",
+    type: 'crew',
+    resolution: "Thomas: 'Courtroom C done. Moving to chambers.'"
+  },
+  {
+    id: 'trailer_parking',
+    text: "Bryson on radio: 'Had to move the trailer - meter maid giving tickets.'",
+    type: 'logistics',
+    resolution: "He found street parking two blocks over."
+  },
+  {
+    id: 'filter_shortage',
+    text: "Jack: 'Running low on 16x25 filters. Need a supply run?'",
+    type: 'logistics',
+    resolution: "Check remaining PTAC units - might need to send someone."
+  },
+  {
+    id: 'clerk_thanks',
+    text: "Clerk pops head in: 'Already breathing easier in here. Thanks!'",
+    type: 'positive',
+    bonus: 1,
+    resolution: "Good feedback to pass along to Jeff."
+  }
+];
 
 const DAY_END_SUMMARY = {
   packUp: [
@@ -2427,18 +2620,22 @@ const PROBLEM_SCENARIOS = {
     { id: 'long_run_suction', name: 'Long Run Suction Loss', description: '60ft run causing significant suction drop', solution: 'Seal all other openings, consider secondary vacuum point', phase: 'execution' }
   ],
   courthouse: [
-    { id: 'security_clearance', name: 'Security Clearance Hold', description: 'Security won\'t grant access to restricted floor', solution: 'Contact facilities manager, provide credentials, wait for escort', phase: 'arrival' },
-    { id: 'court_in_session', name: 'Court In Session', description: 'Cannot work near active courtroom', solution: 'Work other areas, return during recess or after hours', phase: 'execution' },
-    { id: 'historic_register', name: 'Historic Register Damage', description: 'Ornate brass register is fragile/irreplaceable', solution: 'Document condition first, clean in place if possible, photograph any concerns', phase: 'execution' },
-    { id: 'asbestos_discovery', name: 'Suspected Asbestos', description: 'White putty at joints, building is pre-1980', solution: 'STOP WORK immediately, do not disturb, document and report', phase: 'execution', critical: true },
-    { id: 'crew_coordination', name: 'Crew Miscommunication', description: 'Team member started wrong floor', solution: 'Radio to redirect, verify floor assignments, re-sync', phase: 'execution' }
+    { id: 'security_clearance', name: 'Security Clearance Hold', description: 'Security won\'t grant access to Floor 3 - restricted area', solution: 'Contact Jeff Martinez, provide credentials, wait for deputy escort', phase: 'arrival' },
+    { id: 'court_in_session', name: 'Court In Session (Room B)', description: 'Cannot work near active courtroom - trial in progress', solution: 'Work other areas, return during recess (usually 10:30 or 2:30)', phase: 'execution' },
+    { id: 'historic_register', name: 'Historic Brass Grille', description: 'Ornate 1950s brass grille - original to building, irreplaceable', solution: 'Document condition first, clean in place ONLY, photograph any concerns', phase: 'execution' },
+    { id: 'asbestos_discovery', name: 'Suspected Asbestos (White Putty)', description: 'White putty at duct joints - 1950s building, high probability ACM', solution: 'STOP WORK immediately, do not disturb, document location, notify Jeff Martinez', phase: 'execution', critical: true, probability: 0.35 },
+    { id: 'asbestos_insulation', name: 'Fibrous Duct Insulation', description: 'Old fibrous insulation visible - possible asbestos content', solution: 'STOP WORK, same protocol as white putty - assume worst until tested', phase: 'execution', critical: true, probability: 0.2 },
+    { id: 'crew_coordination', name: 'Crew Miscommunication', description: 'Thomas started on Floor 3 before security escort arrived', solution: 'Radio to redirect, verify floor assignments, wait for deputy', phase: 'execution' },
+    { id: 'judge_chambers_timing', name: 'Judge Returning Early', description: 'Judge\'s assistant warns judge returning in 20 minutes', solution: 'Pack up quickly, document progress, can resume after lunch', phase: 'execution' },
+    { id: 'ptac_drain_clog', name: 'PTAC Drain Pan Overflow', description: 'Wall-mounted PTAC drain pan clogged - water damage risk', solution: 'Clear drain, add drain pan tablet, document for facilities', phase: 'execution' },
+    { id: 'trailer_parking', name: 'Equipment Trailer Ticketed', description: 'Third van/trailer got a parking ticket on Church Street', solution: 'Move to alternate location, note for expense report', phase: 'execution' }
   ]
 };
 
 const HAZARDS = [
-  { id: 'mold', name: 'Visible Mold', description: 'Dark growth visible on duct surface', action: 'STOP WORK', protocol: 'Do not disturb. Document. Notify customer. Exit area.' },
-  { id: 'asbestos', name: 'Asbestos-Suspect Material', description: 'White putty at joints, fibrous material', action: 'STOP WORK', protocol: 'Same as mold. Building likely pre-1980s.' },
-  { id: 'dead_animal', name: 'Dead Animal', description: 'Decomposing remains in ductwork', action: 'PPE UPGRADE', protocol: 'Full PPE, careful removal, sanitization required.' }
+  { id: 'mold', name: 'Visible Mold', description: 'Dark growth visible on duct surface', action: 'STOP WORK', protocol: 'Do not disturb. Document. Notify customer. Exit area.', scenarioProbability: { residential: 0.05, commercial: 0.08, courthouse: 0.03 } },
+  { id: 'asbestos', name: 'Asbestos-Suspect Material', description: 'White putty at duct joints, fibrous insulation material', action: 'STOP WORK', protocol: 'Same as mold. Durham Courthouse is 1950s construction - HIGH probability. Do not disturb, document location, notify Jeff Martinez.', scenarioProbability: { residential: 0.02, commercial: 0.05, courthouse: 0.35 } },
+  { id: 'dead_animal', name: 'Dead Animal', description: 'Decomposing remains in ductwork', action: 'PPE UPGRADE', protocol: 'Full PPE, careful removal, sanitization required.', scenarioProbability: { residential: 0.08, commercial: 0.03, courthouse: 0.01 } }
 ];
 
 const TOOLS = [
