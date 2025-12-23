@@ -67,7 +67,7 @@ npm run build    # Production build
 npm run test     # Run tests
 ```
 
-## Current State (v1.3.0)
+## Current State (v1.4.0)
 
 All planned features implemented:
 - ✓ All 3 scenarios playable (residential, commercial, courthouse)
@@ -89,6 +89,11 @@ All planned features implemented:
 - ✓ Keyboard shortcuts (Esc pause, Enter advance, 1-9 select)
 - ✓ Mobile responsive design (375px+)
 - ✓ Pause menu with resume/exit
+- ✓ Splash screen with Carolina Quality Air branding
+- ✓ Demo mode for quick feature showcases
+- ✓ Quick stats dashboard on main menu
+- ✓ Training certificate on successful completion
+- ✓ NADCA compliance checkpoints
 
 ### Multi-Day Courthouse Features
 - Day 1: Floor 1 (Ground Level - Courtrooms A & B, Clerk offices)

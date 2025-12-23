@@ -2787,8 +2787,10 @@ const GAUGE_DIAGNOSES = [
 const initialState = {
   phase: 0,
   subPhase: 0,
-  scenario: null,
+  scenario: 'courthouse', // Default to courthouse (showpiece scenario)
   traineeName: '',
+  showSplash: true, // Show splash screen on startup
+  demoMode: false, // Demo mode for quick feature showcases
   score: 100,
   paused: false,
   penalties: [],
@@ -2859,6 +2861,10 @@ const initialState = {
 
 function gameReducer(state, action) {
   switch (action.type) {
+    case 'DISMISS_SPLASH':
+      return { ...state, showSplash: false };
+    case 'TOGGLE_DEMO_MODE':
+      return { ...state, demoMode: !state.demoMode };
     case 'SELECT_SCENARIO':
       return { ...state, scenario: action.scenario };
     case 'SET_TRAINEE_NAME':
@@ -2874,6 +2880,8 @@ function gameReducer(state, action) {
         subPhase: 0,
         scenario: state.scenario,
         traineeName: state.traineeName,
+        showSplash: false, // Don't show splash again after starting
+        demoMode: state.demoMode, // Preserve demo mode setting
         customerType: customerPool[Math.floor(Math.random() * customerPool.length)],
         totalDays,
         registers,
@@ -3134,7 +3142,7 @@ function gameReducer(state, action) {
       };
     }
     case 'RESET':
-      return initialState;
+      return { ...initialState, showSplash: false }; // Don't show splash on reset, go straight to menu
     case 'TOGGLE_PAUSE':
       return { ...state, paused: !state.paused };
     // NADCA Compliance Actions
@@ -7766,6 +7774,51 @@ function ResultsScreen({ state, dispatch }) {
 }
 
 // ============================================================================
+// SPLASH SCREEN
+// ============================================================================
+
+function SplashScreen({ dispatch }) {
+  useEffect(() => {
+    const handleKeyDown = () => dispatch({ type: 'DISMISS_SPLASH' });
+    const handleClick = () => dispatch({ type: 'DISMISS_SPLASH' });
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('click', handleClick);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('click', handleClick);
+    };
+  }, [dispatch]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full text-center">
+        <div className="mb-8">
+          <div className="text-6xl mb-4">🌀</div>
+          <h1 className="text-3xl md:text-4xl font-black text-yellow-400 mb-2">Carolina Quality Air</h1>
+          <h2 className="text-xl md:text-2xl font-bold text-zinc-300 mb-4">Training System</h2>
+        </div>
+
+        <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-6 mb-8">
+          <p className="text-zinc-400 mb-2">Developed by Benji Asperheim</p>
+          <p className="text-zinc-500 text-sm">Based on real job training at Durham County Courthouse</p>
+          <p className="text-zinc-600 text-sm">December 2024</p>
+        </div>
+
+        <div className="animate-pulse">
+          <p className="text-zinc-400 text-lg">Press any key to continue</p>
+        </div>
+
+        <div className="mt-12 text-zinc-600 text-xs">
+          <p>v1.4.0 • Demo Build</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // MAIN MENU
 // ============================================================================
 
@@ -7776,8 +7829,33 @@ function MainMenu({ state, dispatch }) {
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-black text-yellow-400 mb-2 tracking-tight">DUCT CLEANING</h1>
           <h2 className="text-2xl md:text-3xl font-bold text-zinc-300 mb-2">SIMULATOR</h2>
-          <p className="text-zinc-500">Carolina Quality Air Training System v1.3</p>
+          <p className="text-zinc-500">Carolina Quality Air Training System v1.4</p>
           <p className="text-zinc-600 text-sm mt-1">"Duct cleaning is 20% technique, 80% everything else."</p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-yellow-400">3</div>
+              <div className="text-xs text-zinc-500">Scenarios</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-yellow-400">50+</div>
+              <div className="text-xs text-zinc-500">Decision Points</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-yellow-400">6</div>
+              <div className="text-xs text-zinc-500">Job Phases</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-yellow-400">7</div>
+              <div className="text-xs text-zinc-500">Customer Types</div>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-zinc-700/50 text-center">
+            <p className="text-zinc-400 text-xs">Covers: Equipment Selection, Safety Protocols, Customer Communication, NADCA Compliance</p>
+          </div>
         </div>
 
         <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 mb-6">
@@ -7792,8 +7870,24 @@ function MainMenu({ state, dispatch }) {
           />
         </div>
 
+        {/* Demo Mode Toggle */}
+        <div className="bg-zinc-800/50 border border-blue-500/30 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-blue-400 font-bold">Demo Mode</h4>
+              <p className="text-zinc-500 text-sm">Skip to key moments (access cutting, hazard discovery, customer confrontation)</p>
+            </div>
+            <button
+              onClick={() => dispatch({ type: 'TOGGLE_DEMO_MODE' })}
+              className={`px-4 py-2 rounded-lg font-bold transition-all ${state.demoMode ? 'bg-blue-500 text-zinc-900' : 'bg-zinc-700 text-zinc-400 hover:bg-zinc-600'}`}
+            >
+              {state.demoMode ? 'ON' : 'OFF'}
+            </button>
+          </div>
+        </div>
+
         <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-6 mb-6">
-          <h3 className="text-yellow-400 font-bold mb-4">🎮 Select Training Scenario</h3>
+          <h3 className="text-yellow-400 font-bold mb-4">Select Training Scenario</h3>
           <div className="space-y-3">
             {Object.entries(SCENARIOS).map(([key, scenario]) => (
               <button key={key} onClick={() => dispatch({ type: 'SELECT_SCENARIO', scenario: key })} className={`w-full p-4 rounded-lg border-2 text-left transition-all ${state.scenario === key ? 'bg-yellow-500/20 border-yellow-500' : scenario.unlocked ? 'bg-zinc-900 border-zinc-700 hover:border-yellow-500/50' : 'bg-zinc-900/50 border-zinc-800 opacity-50 cursor-not-allowed'}`} disabled={!scenario.unlocked}>
@@ -7803,6 +7897,7 @@ function MainMenu({ state, dispatch }) {
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-zinc-200">{scenario.name}</span>
                       <span className={`text-xs px-2 py-0.5 rounded ${scenario.difficulty === 'Beginner' ? 'bg-green-900 text-green-400' : scenario.difficulty === 'Intermediate' ? 'bg-yellow-900 text-yellow-400' : 'bg-red-900 text-red-400'}`}>{scenario.difficulty}</span>
+                      {key === 'courthouse' && <span className="text-xs px-2 py-0.5 rounded bg-blue-900 text-blue-400">RECOMMENDED</span>}
                     </div>
                     <p className="text-sm text-zinc-400 mt-1">{scenario.description}</p>
                     <p className="text-xs text-zinc-500 mt-1">System: {scenario.systemType.toUpperCase()} • Est: {scenario.estimatedTime}</p>
@@ -7813,19 +7908,25 @@ function MainMenu({ state, dispatch }) {
             ))}
           </div>
         </div>
-        
+
         <div className="bg-zinc-900/50 border border-zinc-700 rounded-lg p-4 mb-6">
-          <h4 className="text-zinc-400 font-bold mb-2">📚 Training Phases</h4>
+          <h4 className="text-zinc-400 font-bold mb-2">Training Phases</h4>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs">
-            {['📋 Pre-Job', '🏠 Arrival', '🔌 Setup', '🔧 Execute', '✅ Complete', '🎯 Results'].map((phase, i) => (
+            {['Pre-Job', 'Arrival', 'Setup', 'Execute', 'Complete', 'Results'].map((phase, i) => (
               <div key={i} className="bg-zinc-800 rounded p-2 text-center text-zinc-400">{phase}</div>
             ))}
           </div>
         </div>
-        
+
         <button onClick={() => state.scenario && dispatch({ type: 'START_GAME' })} disabled={!state.scenario} className={`w-full py-4 font-black text-xl rounded-lg transition-all ${state.scenario ? 'bg-yellow-500 hover:bg-yellow-400 text-zinc-900 transform hover:scale-[1.02]' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'}`}>
-          {state.scenario ? `🚐 START: ${SCENARIOS[state.scenario]?.name}` : 'Select a Scenario Above'}
+          {state.scenario ? `START: ${SCENARIOS[state.scenario]?.name}${state.demoMode ? ' (Demo)' : ''}` : 'Select a Scenario Above'}
         </button>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-zinc-600 text-xs">
+          <p className="mb-1">Developed for Carolina Quality Air training program</p>
+          <p>Questions? Contact benji@asperheim.dev</p>
+        </div>
       </div>
     </div>
   );
@@ -7876,6 +7977,11 @@ export default function DuctCleaningSimulator() {
   }, [state.phase, state.paused]);
 
   const renderPhase = () => {
+    // Show splash screen on initial load
+    if (state.showSplash) {
+      return <SplashScreen dispatch={dispatch} />;
+    }
+
     // Handle multi-day transitions for courthouse
     if (state.dayPhase === 'day-end') {
       return <DayEndPhase state={state} dispatch={dispatch} />;
