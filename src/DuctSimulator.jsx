@@ -2391,6 +2391,7 @@ const initialState = {
   subPhase: 0,
   scenario: null,
   score: 100,
+  paused: false,
   penalties: [],
   bonuses: [],
   equipment: {},
@@ -2687,6 +2688,8 @@ function gameReducer(state, action) {
     }
     case 'RESET':
       return initialState;
+    case 'TOGGLE_PAUSE':
+      return { ...state, paused: !state.paused };
     default:
       return state;
   }
@@ -2763,22 +2766,63 @@ function PhaseHeader({ phase, scenario, currentDay, totalDays }) {
 function ScoreBar({ state, dispatch }) {
   if (state.phase === 0 || state.phase === 7) return null;
   return (
-    <div className="fixed top-0 left-0 right-0 bg-zinc-900 border-b border-yellow-500/30 px-4 py-2 z-40">
-      <div className="max-w-5xl mx-auto flex justify-between items-center text-sm">
-        <div className="flex items-center gap-3">
-          <span className="text-yellow-400 font-bold">CQA TRAINING</span>
-          <span className="text-zinc-500">|</span>
-          <span className="text-zinc-400">{SCENARIOS[state.scenario]?.icon} {SCENARIOS[state.scenario]?.name}</span>
+    <div className="fixed top-0 left-0 right-0 bg-zinc-900 border-b border-yellow-500/30 px-2 sm:px-4 py-2 z-40">
+      <div className="max-w-5xl mx-auto flex justify-between items-center text-xs sm:text-sm">
+        <div className="flex items-center gap-1 sm:gap-3">
+          <span className="text-yellow-400 font-bold hidden sm:inline">CQA TRAINING</span>
+          <span className="text-yellow-400 font-bold sm:hidden">CQA</span>
+          <span className="text-zinc-500 hidden sm:inline">|</span>
+          <span className="text-zinc-400">{SCENARIOS[state.scenario]?.icon} <span className="hidden sm:inline">{SCENARIOS[state.scenario]?.name}</span></span>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-zinc-400">Score: <span className={state.score >= 80 ? 'text-green-400' : state.score >= 60 ? 'text-yellow-400' : 'text-red-400'}>{state.score}</span>/100</span>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span className="text-zinc-400">Score: <span className={state.score >= 80 ? 'text-green-400' : state.score >= 60 ? 'text-yellow-400' : 'text-red-400'}>{state.score}</span></span>
           {state.timeDelay > 0 && (
-            <span className="text-orange-400">⏱️ +{state.timeDelay}min</span>
+            <span className="text-orange-400 hidden sm:inline">⏱️ +{state.timeDelay}min</span>
           )}
           {state.phase === 3 && state.subPhase === 1 && (
-            <span className="text-zinc-500">🔩 Screws: {state.screwInventory}</span>
+            <span className="text-zinc-500 hidden sm:inline">🔩 {state.screwInventory}</span>
           )}
-          <button onClick={() => dispatch({ type: 'RESET' })} className="text-zinc-500 hover:text-red-400">✕ Exit</button>
+          <button
+            onClick={() => dispatch({ type: 'TOGGLE_PAUSE' })}
+            className="text-zinc-500 hover:text-yellow-400 px-2"
+            title="Pause (Esc)"
+          >
+            ⏸
+          </button>
+          <button onClick={() => dispatch({ type: 'RESET' })} className="text-zinc-500 hover:text-red-400">✕</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PauseMenu({ dispatch }) {
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div className="bg-zinc-900 border-2 border-yellow-500 rounded-lg p-6 max-w-md w-full text-center">
+        <h2 className="text-2xl font-bold text-yellow-400 mb-2">Paused</h2>
+        <p className="text-zinc-400 text-sm mb-6">Press Escape or click Resume to continue</p>
+        <div className="space-y-3">
+          <button
+            onClick={() => dispatch({ type: 'TOGGLE_PAUSE' })}
+            className="w-full px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded transition-colors"
+          >
+            Resume
+          </button>
+          <button
+            onClick={() => dispatch({ type: 'RESET' })}
+            className="w-full px-6 py-3 bg-zinc-800 hover:bg-red-900/50 text-zinc-300 hover:text-red-400 border border-zinc-700 hover:border-red-500 rounded transition-colors"
+          >
+            Exit to Menu
+          </button>
+        </div>
+        <div className="mt-6 pt-4 border-t border-zinc-700">
+          <h3 className="text-sm font-bold text-zinc-400 mb-2">Keyboard Shortcuts</h3>
+          <div className="text-xs text-zinc-500 space-y-1">
+            <p><kbd className="px-1 py-0.5 bg-zinc-800 rounded">Esc</kbd> Pause/Resume</p>
+            <p><kbd className="px-1 py-0.5 bg-zinc-800 rounded">Enter</kbd> Continue/Advance dialogue</p>
+            <p><kbd className="px-1 py-0.5 bg-zinc-800 rounded">1-9</kbd> Select dialogue option</p>
+          </div>
         </div>
       </div>
     </div>
@@ -3829,12 +3873,11 @@ function SiteMapNavigation({ state, dispatch, onComplete }) {
         )}
 
         {/* SVG Floor Plan */}
-        <div className="bg-zinc-900 rounded-lg p-2 overflow-auto">
+        <div className="bg-zinc-900 rounded-lg p-2 overflow-x-auto">
           <svg
-            width={siteMap.width}
-            height={siteMap.height}
             viewBox={`0 0 ${siteMap.width} ${siteMap.height}`}
-            className="mx-auto"
+            className="mx-auto w-full max-w-full min-w-[320px]"
+            style={{ aspectRatio: `${siteMap.width}/${siteMap.height}` }}
           >
             {/* Connection lines (render first, behind areas) */}
             {renderConnections()}
@@ -5884,7 +5927,44 @@ function MainMenu({ state, dispatch }) {
 
 export default function DuctCleaningSimulator() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
-  
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Escape to toggle pause (only when in game)
+      if (e.key === 'Escape' && state.phase > 0 && state.phase < 7) {
+        e.preventDefault();
+        dispatch({ type: 'TOGGLE_PAUSE' });
+        return;
+      }
+
+      // Don't process other shortcuts when paused or in menu
+      if (state.paused || state.phase === 0 || state.phase === 7) return;
+
+      // Enter to click primary action buttons
+      if (e.key === 'Enter') {
+        const primaryBtn = document.querySelector('button.bg-yellow-500, button.bg-green-600');
+        if (primaryBtn) {
+          e.preventDefault();
+          primaryBtn.click();
+        }
+      }
+
+      // Number keys 1-9 to select dialogue options
+      if (e.key >= '1' && e.key <= '9') {
+        const optionIndex = parseInt(e.key) - 1;
+        const options = document.querySelectorAll('.space-y-2 > button, .space-y-3 > button');
+        if (options[optionIndex]) {
+          e.preventDefault();
+          options[optionIndex].click();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.phase, state.paused]);
+
   const renderPhase = () => {
     // Handle multi-day transitions for courthouse
     if (state.dayPhase === 'day-end') {
@@ -5961,8 +6041,9 @@ export default function DuctCleaningSimulator() {
   };
   
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4" style={{ fontFamily: "'JetBrains Mono', 'SF Mono', 'Consolas', monospace" }}>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-2 sm:p-4" style={{ fontFamily: "'JetBrains Mono', 'SF Mono', 'Consolas', monospace" }}>
       <ScoreBar state={state} dispatch={dispatch} />
+      {state.paused && <PauseMenu dispatch={dispatch} />}
       <div className={state.phase > 0 && state.phase < 7 ? 'pt-12' : ''}>
         {renderPhase()}
       </div>
