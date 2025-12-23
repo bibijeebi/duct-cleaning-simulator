@@ -1011,6 +1011,83 @@ const SCENARIO_DUCTS = {
 };
 
 // ============================================================================
+// MULTI-DAY COURTHOUSE DATA
+// ============================================================================
+
+const COURTHOUSE_FLOORS = {
+  1: {
+    name: 'Floor 1 - Ground Level',
+    description: 'Main entrance, Courtrooms A & B, Clerk offices',
+    ductPrefix: 'floor1_',
+    ptacCount: 16,
+    challenges: ['High foot traffic', 'Active courtrooms', 'Security screening area']
+  },
+  2: {
+    name: 'Floor 2 - Courtrooms',
+    description: 'Courtroom C, Judge chambers, Conference rooms',
+    ductPrefix: 'floor2_',
+    ptacCount: 15,
+    challenges: ['Judge schedules vary', 'Quiet zones required', 'Historic fixtures']
+  },
+  3: {
+    name: 'Floor 3 - Administration',
+    description: 'Admin offices, Records room, IT department',
+    ductPrefix: 'floor3_',
+    ptacCount: 16,
+    challenges: ['Records require dust protection', 'Server room - temperature sensitive', 'Less security escort needed']
+  }
+};
+
+const DAY_START_EVENTS = {
+  returning_crew: [
+    { id: 'fast_checkin', text: "Security remembers you from yesterday - faster check-in today.", bonus: 2, type: 'positive' },
+    { id: 'equipment_where', text: "Your equipment is right where you left it in the staging area.", bonus: 0, type: 'neutral' },
+    { id: 'morning_coffee', text: "Jeff from Facilities brings coffee. 'Heard good things about yesterday's work.'", bonus: 3, type: 'positive' }
+  ],
+  callbacks: [
+    { id: 'register_callback', text: "Jeff: 'That register you flagged yesterday in Courtroom A - can you take another look? Judge noticed a rattle.'", task: 'reinspect_register', floor: 1 },
+    { id: 'airflow_question', text: "Clerk from Floor 1: 'The air feels different today - in a good way! What did you do?'", task: 'explain_work', floor: 1 },
+    { id: 'noise_complaint', text: "Security: 'Got a complaint about noise from yesterday. Judge Williams wasn't happy.'", penalty: 5, type: 'negative' },
+    { id: 'dust_followup', text: "Jeff: 'Admin on Floor 2 said there was some dust on their desks. Did we miss covering something?'", task: 'apologize', penalty: 3 }
+  ],
+  morning_briefing: [
+    { id: 'schedule_change', text: "Court schedule changed - Courtroom C has a trial starting at 10 AM instead of 2 PM.", impact: 'Must work around new schedule' },
+    { id: 'vip_visit', text: "Heads up: County Commissioner touring the building at 2 PM. Look sharp.", impact: 'Extra scrutiny' },
+    { id: 'hvac_issue', text: "Overnight HVAC had issues on Floor 3. Might find more debris than expected.", impact: 'Extra cleaning needed' }
+  ]
+};
+
+const DAY_END_SUMMARY = {
+  packUp: [
+    'Secure all equipment in staging area',
+    'Cover exposed ductwork with plastic',
+    'Remove drop cloths from work areas',
+    'Collect all debris and dispose properly',
+    'Document progress with photos'
+  ],
+  securityCheckout: [
+    'Return temporary access badges',
+    'Sign out at security desk',
+    'Confirm tomorrow\'s arrival time',
+    'Report any issues or concerns'
+  ]
+};
+
+// Helper to get ducts for current day in courthouse
+function getCourthouseDuctsForDay(day) {
+  const floor = COURTHOUSE_FLOORS[day];
+  if (!floor) return [];
+
+  const allDucts = SCENARIO_DUCTS.courthouse;
+  return allDucts.filter(duct => {
+    // Include ducts for the current floor, or PTAC units on final day
+    if (duct.id.startsWith(floor.ductPrefix)) return true;
+    if (day === 3 && duct.id === 'ptac_units') return true;
+    return false;
+  });
+}
+
+// ============================================================================
 // VEHICLE INSPECTION DATA
 // ============================================================================
 
@@ -1281,6 +1358,28 @@ function generateRegistersForScenario(scenario) {
   return registers;
 }
 
+// Generate registers for a specific day in multi-day courthouse scenario
+function generateRegistersForDay(scenario, day) {
+  if (scenario !== 'courthouse') {
+    return generateRegistersForScenario(scenario);
+  }
+  const ducts = getCourthouseDuctsForDay(day);
+  const registers = ducts
+    .filter(d => d.type === 'supply' || d.type === 'return')
+    .map(duct => ({
+      id: `reg_${duct.id}_day${day}`,
+      ductId: duct.id,
+      name: duct.name.replace('Supply', 'Register').replace('Return', 'Return Grille'),
+      condition: generateRegisterCondition(),
+      removed: false,
+      damaged: false,
+      screwCount: duct.type === 'return' ? 4 : 2,
+      screwsRecovered: 0,
+      skipped: false
+    }));
+  return registers;
+}
+
 const PROBLEM_SCENARIOS = {
   common: [
     { id: 'painted_screws', name: 'Painted-Over Screws', description: 'Register screws are painted over', solution: 'Score paint around screws before turning', phase: 'execution' },
@@ -1429,7 +1528,15 @@ const initialState = {
   screwsNeeded: 0,
   registersRemoved: {},
   registerDamages: [],
-  timeDelay: 0
+  timeDelay: 0,
+  // Multi-day courthouse state
+  dayPhase: null, // 'day-start' or 'day-end' for transition screens
+  dayProgress: {}, // { 1: { ductsClean: {}, score: 100 }, 2: {...} }
+  dayScores: [], // Score breakdown per day
+  dayStartEvent: null, // Random event at start of day
+  dayCallback: null, // Callback from previous day
+  dayPackedUp: false, // Equipment packed for day
+  dayCheckedOut: false // Security checkout complete
 };
 
 function gameReducer(state, action) {
@@ -1521,8 +1628,87 @@ function gameReducer(state, action) {
       return { ...state, securityCleared: true };
     case 'ASSIGN_CREW':
       return { ...state, crewAssigned: true };
-    case 'NEXT_DAY':
-      return { ...state, currentDay: state.currentDay + 1 };
+    // Multi-day courthouse actions
+    case 'START_DAY_END': {
+      // Save current day's progress before transitioning
+      const currentDayScore = state.score;
+      const dayProgress = {
+        ...state.dayProgress,
+        [state.currentDay]: {
+          ductsClean: { ...state.ductsClean },
+          score: currentDayScore,
+          penalties: [...state.penalties],
+          bonuses: [...state.bonuses]
+        }
+      };
+      return {
+        ...state,
+        dayPhase: 'day-end',
+        dayProgress,
+        dayPackedUp: false,
+        dayCheckedOut: false
+      };
+    }
+    case 'PACK_UP_EQUIPMENT':
+      return { ...state, dayPackedUp: true };
+    case 'SECURITY_CHECKOUT':
+      return { ...state, dayCheckedOut: true };
+    case 'NEXT_DAY': {
+      // Transition to next day - preserve ductsClean across days
+      const nextDay = state.currentDay + 1;
+      // Pick a random day start event for returning crew
+      const returningEvents = DAY_START_EVENTS.returning_crew;
+      const randomReturning = returningEvents[Math.floor(Math.random() * returningEvents.length)];
+      // Maybe pick a callback (40% chance)
+      let callback = null;
+      if (Math.random() < 0.4) {
+        const callbacks = DAY_START_EVENTS.callbacks.filter(c => c.floor < nextDay);
+        if (callbacks.length > 0) {
+          callback = callbacks[Math.floor(Math.random() * callbacks.length)];
+        }
+      }
+      // Generate registers for the new floor
+      const newRegisters = generateRegistersForDay(state.scenario, nextDay);
+      const newScrewsNeeded = newRegisters.reduce((sum, r) => sum + r.screwCount, 0);
+      return {
+        ...state,
+        currentDay: nextDay,
+        dayPhase: 'day-start',
+        dayStartEvent: randomReturning,
+        dayCallback: callback,
+        dayPackedUp: false,
+        dayCheckedOut: false,
+        // Reset daily state but preserve cross-day progress
+        powerConnected: false,
+        securityCleared: false,
+        registers: newRegisters,
+        screwsNeeded: newScrewsNeeded,
+        screwInventory: 0,
+        registersRemoved: {},
+        registerDamages: [],
+        photosDocumented: false,
+        customerWalkthrough: false
+      };
+    }
+    case 'COMPLETE_DAY_START':
+      return { ...state, dayPhase: null, phase: 3, subPhase: 0 };
+    case 'HANDLE_CALLBACK': {
+      if (action.success) {
+        return {
+          ...state,
+          dayCallback: null,
+          score: Math.min(100, state.score + 3),
+          bonuses: [...state.bonuses, { reason: 'Handled callback professionally', points: 3 }]
+        };
+      } else {
+        return {
+          ...state,
+          dayCallback: null,
+          score: Math.max(0, state.score - (action.penalty || 0)),
+          penalties: action.penalty ? [...state.penalties, { reason: 'Poor callback handling', points: action.penalty }] : state.penalties
+        };
+      }
+    }
     case 'COMPLETE_JOB':
       return { ...state, phase: 7 };
     case 'REMOVE_REGISTER': {
@@ -2886,7 +3072,10 @@ function DuctCleaning({ state, dispatch }) {
   const [showGaugeCheck, setShowGaugeCheck] = useState(false);
   const [currentGaugeScenario, setCurrentGaugeScenario] = useState(null);
 
-  const ducts = SCENARIO_DUCTS[state.scenario] || [];
+  // For courthouse, get floor-specific ducts based on current day
+  const ducts = state.scenario === 'courthouse'
+    ? getCourthouseDuctsForDay(state.currentDay)
+    : (SCENARIO_DUCTS[state.scenario] || []);
   const currentDuct = ducts[currentDuctIndex];
 
   const triggerRandomProblem = () => {
@@ -2926,19 +3115,54 @@ function DuctCleaning({ state, dispatch }) {
   };
   
   if (!currentDuct || currentDuctIndex >= ducts.length) {
+    // For courthouse multi-day: end of day transition instead of completion (unless final day)
+    const isMultiDay = state.scenario === 'courthouse' && state.totalDays > 1;
+    const isFinalDay = state.currentDay >= state.totalDays;
+
+    // Count cleaned ducts for current floor only
+    const floorDucts = isMultiDay ? getCourthouseDuctsForDay(state.currentDay) : ducts;
+    const cleanedThisFloor = floorDucts.filter(d => state.ductsClean[d.id]).length;
+    const excellentThisFloor = floorDucts.filter(d => state.ductsClean[d.id] === 'excellent').length;
+    const goodThisFloor = floorDucts.filter(d => state.ductsClean[d.id] === 'good').length;
+    const poorThisFloor = floorDucts.filter(d => state.ductsClean[d.id] === 'poor').length;
+
+    const handleProceed = () => {
+      if (isMultiDay && !isFinalDay) {
+        // End of day - go to day-end transition
+        dispatch({ type: 'START_DAY_END' });
+      } else {
+        // Final day or single-day scenario - go to completion
+        dispatch({ type: 'SET_PHASE', phase: 5 });
+      }
+    };
+
     return (
       <div className="space-y-4">
         <div className="bg-green-900/30 border-2 border-green-500 rounded-lg p-6 text-center">
           <span className="text-5xl">🎉</span>
-          <h3 className="text-green-400 font-bold text-xl mt-4">All Ducts Cleaned!</h3>
+          <h3 className="text-green-400 font-bold text-xl mt-4">
+            {isMultiDay ? `Floor ${state.currentDay} Complete!` : 'All Ducts Cleaned!'}
+          </h3>
+          {isMultiDay && (
+            <p className="text-zinc-400 text-sm mt-1">
+              {COURTHOUSE_FLOORS[state.currentDay]?.name}
+            </p>
+          )}
           <p className="text-zinc-300 mt-2">
-            {Object.values(state.ductsClean).filter(q => q === 'excellent').length} excellent,
-            {Object.values(state.ductsClean).filter(q => q === 'good').length} good,
-            {Object.values(state.ductsClean).filter(q => q === 'poor').length} poor
+            {excellentThisFloor} excellent, {goodThisFloor} good, {poorThisFloor} poor
           </p>
         </div>
-        <button onClick={() => dispatch({ type: 'SET_PHASE', phase: 5 })} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
-          Proceed to Completion →
+
+        {isMultiDay && !isFinalDay && (
+          <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+            <p className="text-blue-300 text-sm">
+              <span className="font-bold">Day {state.currentDay} of {state.totalDays}</span> - Time to pack up and check out with security.
+            </p>
+          </div>
+        )}
+
+        <button onClick={handleProceed} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
+          {isMultiDay && !isFinalDay ? `End Day ${state.currentDay} →` : 'Proceed to Completion →'}
         </button>
       </div>
     );
@@ -3346,6 +3570,267 @@ function CustomerWalkthrough({ state, dispatch, onComplete }) {
   );
 }
 
+// ============================================================================
+// MULTI-DAY TRANSITION COMPONENTS
+// ============================================================================
+
+function DayEndPhase({ state, dispatch }) {
+  const floor = COURTHOUSE_FLOORS[state.currentDay];
+  const dayDucts = getCourthouseDuctsForDay(state.currentDay);
+  const cleanedCount = dayDucts.filter(d => state.ductsClean[d.id]).length;
+  const excellentCount = dayDucts.filter(d => state.ductsClean[d.id] === 'excellent').length;
+
+  const handlePackUp = () => {
+    dispatch({ type: 'PACK_UP_EQUIPMENT' });
+    dispatch({ type: 'ADD_BONUS', reason: 'Proper end-of-day pack up', points: 2 });
+  };
+
+  const handleSecurityCheckout = () => {
+    dispatch({ type: 'SECURITY_CHECKOUT' });
+  };
+
+  const handleNextDay = () => {
+    dispatch({ type: 'NEXT_DAY' });
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="text-center mb-6">
+        <span className="text-5xl">🌅</span>
+        <h2 className="text-2xl font-bold text-yellow-400 mt-4">End of Day {state.currentDay}</h2>
+        <p className="text-zinc-400">{floor?.name}</p>
+      </div>
+
+      {/* Day Summary */}
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <h3 className="text-yellow-400 font-bold mb-4">📊 Day {state.currentDay} Summary</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+            <p className="text-zinc-400 text-xs">Ducts Cleaned</p>
+            <p className="text-2xl font-bold text-zinc-100">{cleanedCount}/{dayDucts.length}</p>
+          </div>
+          <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+            <p className="text-zinc-400 text-xs">Excellent Quality</p>
+            <p className="text-2xl font-bold text-green-400">{excellentCount}</p>
+          </div>
+          <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+            <p className="text-zinc-400 text-xs">Current Score</p>
+            <p className="text-2xl font-bold text-yellow-400">{state.score}</p>
+          </div>
+          <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+            <p className="text-zinc-400 text-xs">Time Delays</p>
+            <p className="text-2xl font-bold text-orange-400">+{state.timeDelay}min</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Pack Up Checklist */}
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <h3 className="text-yellow-400 font-bold mb-4">📦 End of Day Pack Up</h3>
+        {!state.dayPackedUp ? (
+          <div className="space-y-2">
+            {DAY_END_SUMMARY.packUp.map((task, i) => (
+              <div key={i} className="flex items-center gap-2 text-zinc-300 text-sm">
+                <span className="text-zinc-600">○</span>
+                <span>{task}</span>
+              </div>
+            ))}
+            <button onClick={handlePackUp} className="mt-4 w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded transition-all">
+              Complete Pack Up (+2 pts)
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 bg-green-900/30 border border-green-500 rounded">
+            <p className="text-green-400 font-bold">✓ Equipment Secured</p>
+            <p className="text-zinc-400 text-sm">All equipment packed and staging area organized for tomorrow.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Security Checkout */}
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <h3 className="text-yellow-400 font-bold mb-4">🛡️ Security Checkout</h3>
+        {!state.dayCheckedOut ? (
+          <div className="space-y-2">
+            {DAY_END_SUMMARY.securityCheckout.map((task, i) => (
+              <div key={i} className="flex items-center gap-2 text-zinc-300 text-sm">
+                <span className="text-zinc-600">○</span>
+                <span>{task}</span>
+              </div>
+            ))}
+            <button onClick={handleSecurityCheckout} disabled={!state.dayPackedUp} className={`mt-4 w-full py-3 font-bold rounded transition-all ${state.dayPackedUp ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'}`}>
+              Complete Security Checkout
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 bg-green-900/30 border border-green-500 rounded">
+            <p className="text-green-400 font-bold">✓ Checked Out</p>
+            <p className="text-zinc-400 text-sm">Badges returned, signed out. See you tomorrow at 7:30 AM.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Tomorrow Preview */}
+      {state.dayPackedUp && state.dayCheckedOut && state.currentDay < state.totalDays && (
+        <div className="bg-zinc-800/50 border border-blue-500/30 rounded-lg p-4">
+          <h3 className="text-blue-400 font-bold mb-2">📅 Tomorrow: Day {state.currentDay + 1}</h3>
+          <p className="text-zinc-300">{COURTHOUSE_FLOORS[state.currentDay + 1]?.name}</p>
+          <p className="text-zinc-500 text-sm mt-1">{COURTHOUSE_FLOORS[state.currentDay + 1]?.description}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {COURTHOUSE_FLOORS[state.currentDay + 1]?.challenges.map((c, i) => (
+              <span key={i} className="px-2 py-1 bg-zinc-900 rounded text-xs text-zinc-400">{c}</span>
+            ))}
+          </div>
+          <button onClick={handleNextDay} className="mt-4 w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all">
+            Start Day {state.currentDay + 1} →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DayStartPhase({ state, dispatch }) {
+  const [eventAcknowledged, setEventAcknowledged] = useState(false);
+  const [callbackHandled, setCallbackHandled] = useState(!state.dayCallback);
+  const [securityDone, setSecurityDone] = useState(false);
+
+  const floor = COURTHOUSE_FLOORS[state.currentDay];
+
+  const handleAcknowledgeEvent = () => {
+    if (state.dayStartEvent?.bonus) {
+      dispatch({ type: 'ADD_BONUS', reason: state.dayStartEvent.text.split('.')[0], points: state.dayStartEvent.bonus });
+    }
+    setEventAcknowledged(true);
+  };
+
+  const handleCallback = (success) => {
+    dispatch({ type: 'HANDLE_CALLBACK', success, penalty: state.dayCallback?.penalty || 0 });
+    setCallbackHandled(true);
+  };
+
+  const handleSecurityCheckIn = () => {
+    dispatch({ type: 'CLEAR_SECURITY' });
+    setSecurityDone(true);
+  };
+
+  const handleStartWork = () => {
+    dispatch({ type: 'COMPLETE_DAY_START' });
+  };
+
+  const canProceed = eventAcknowledged && callbackHandled && securityDone;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="text-center mb-6">
+        <span className="text-5xl">🌅</span>
+        <h2 className="text-2xl font-bold text-yellow-400 mt-4">Day {state.currentDay} - Morning</h2>
+        <p className="text-zinc-400">{floor?.name}</p>
+      </div>
+
+      {/* Returning Crew Event */}
+      {state.dayStartEvent && !eventAcknowledged && (
+        <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+          <h3 className="text-yellow-400 font-bold mb-3">☀️ Morning Arrival</h3>
+          <div className={`p-4 rounded border ${state.dayStartEvent.type === 'positive' ? 'bg-green-900/20 border-green-500/50' : 'bg-zinc-900 border-zinc-700'}`}>
+            <p className="text-zinc-200">{state.dayStartEvent.text}</p>
+            {state.dayStartEvent.bonus > 0 && (
+              <p className="text-green-400 text-sm mt-2">+{state.dayStartEvent.bonus} points</p>
+            )}
+          </div>
+          <button onClick={handleAcknowledgeEvent} className="mt-4 w-full py-2 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
+            Continue
+          </button>
+        </div>
+      )}
+
+      {/* Callback from Previous Day */}
+      {state.dayCallback && !callbackHandled && eventAcknowledged && (
+        <div className="bg-orange-900/20 border border-orange-500/50 rounded-lg p-4">
+          <h3 className="text-orange-400 font-bold mb-3">📞 Callback from Yesterday</h3>
+          <p className="text-zinc-200">{state.dayCallback.text}</p>
+          {state.dayCallback.penalty && (
+            <p className="text-orange-400 text-sm mt-2">Previous issue: -{state.dayCallback.penalty} points if not addressed</p>
+          )}
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button onClick={() => handleCallback(true)} className="py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded">
+              Handle Professionally
+            </button>
+            <button onClick={() => handleCallback(false)} className="py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 font-bold rounded">
+              Brush Off
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Security Check-In */}
+      {eventAcknowledged && callbackHandled && !securityDone && (
+        <div className="bg-zinc-800/50 border border-blue-500/30 rounded-lg p-4">
+          <h3 className="text-blue-400 font-bold mb-3">🛡️ Security Check-In</h3>
+          <p className="text-zinc-300">Morning check-in with courthouse security.</p>
+          {state.currentDay > 1 && (
+            <p className="text-green-400 text-sm mt-2">Security recognizes you from yesterday - expedited check-in.</p>
+          )}
+          <button onClick={handleSecurityCheckIn} className="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded">
+            Complete Check-In
+          </button>
+        </div>
+      )}
+
+      {/* Today's Floor Preview */}
+      {eventAcknowledged && callbackHandled && securityDone && (
+        <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+          <h3 className="text-yellow-400 font-bold mb-3">📋 Today's Assignment</h3>
+          <p className="text-zinc-200 font-bold text-lg">{floor?.name}</p>
+          <p className="text-zinc-400 mt-1">{floor?.description}</p>
+
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+              <p className="text-zinc-400 text-xs">PTAC Units</p>
+              <p className="text-xl font-bold text-zinc-100">{floor?.ptacCount}</p>
+            </div>
+            <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+              <p className="text-zinc-400 text-xs">Ducts to Clean</p>
+              <p className="text-xl font-bold text-zinc-100">{getCourthouseDuctsForDay(state.currentDay).length}</p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-zinc-500 text-sm mb-2">Today's Challenges:</p>
+            <div className="flex flex-wrap gap-2">
+              {floor?.challenges.map((c, i) => (
+                <span key={i} className="px-2 py-1 bg-orange-900/30 border border-orange-500/50 rounded text-xs text-orange-300">{c}</span>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={handleStartWork} className="mt-6 w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all">
+            Begin Work on {floor?.name} →
+          </button>
+        </div>
+      )}
+
+      {/* Progress from Previous Days */}
+      {state.currentDay > 1 && eventAcknowledged && (
+        <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
+          <h3 className="text-zinc-400 font-bold mb-3">📈 Previous Days</h3>
+          <div className="space-y-2">
+            {Array.from({ length: state.currentDay - 1 }, (_, i) => i + 1).map(day => {
+              const dayData = state.dayProgress[day];
+              return (
+                <div key={day} className="flex justify-between items-center p-2 bg-zinc-900 rounded">
+                  <span className="text-zinc-300">Day {day} - {COURTHOUSE_FLOORS[day]?.name}</span>
+                  <span className="text-green-400">✓ Complete</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CompletionPhase({ state, dispatch }) {
   const [photosTaken, setPhotosTaken] = useState(state.photosDocumented || false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
@@ -3530,7 +4015,33 @@ function ResultsScreen({ state, dispatch }) {
           </div>
         </div>
       </div>
-      
+
+      {/* Multi-day summary for courthouse */}
+      {state.scenario === 'courthouse' && state.totalDays > 1 && Object.keys(state.dayProgress).length > 0 && (
+        <div className="bg-zinc-900 rounded-lg p-4 border border-blue-500/30">
+          <h3 className="text-blue-400 font-bold mb-3">📅 Multi-Day Summary</h3>
+          <div className="space-y-2">
+            {Array.from({ length: state.totalDays }, (_, i) => i + 1).map(day => {
+              const floor = COURTHOUSE_FLOORS[day];
+              const dayData = state.dayProgress[day];
+              const dayDucts = getCourthouseDuctsForDay(day);
+              const cleanedCount = dayDucts.filter(d => state.ductsClean[d.id]).length;
+              return (
+                <div key={day} className="flex justify-between items-center p-2 bg-zinc-800 rounded">
+                  <div>
+                    <span className="text-zinc-300 font-medium">Day {day}</span>
+                    <span className="text-zinc-500 text-sm ml-2">{floor?.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-green-400">{cleanedCount}/{dayDucts.length} ducts</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <button onClick={() => dispatch({ type: 'START_GAME' })} className="py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">🔄 Retry This Job</button>
         <button onClick={() => dispatch({ type: 'RESET' })} className="py-3 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 font-bold rounded">🏠 Main Menu</button>
@@ -3550,7 +4061,7 @@ function MainMenu({ state, dispatch }) {
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-black text-yellow-400 mb-2 tracking-tight">DUCT CLEANING</h1>
           <h2 className="text-2xl md:text-3xl font-bold text-zinc-300 mb-2">SIMULATOR</h2>
-          <p className="text-zinc-500">Carolina Quality Air Training System v1.2</p>
+          <p className="text-zinc-500">Carolina Quality Air Training System v1.3</p>
           <p className="text-zinc-600 text-sm mt-1">"Duct cleaning is 20% technique, 80% everything else."</p>
         </div>
         
@@ -3601,6 +4112,14 @@ export default function DuctCleaningSimulator() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   
   const renderPhase = () => {
+    // Handle multi-day transitions for courthouse
+    if (state.dayPhase === 'day-end') {
+      return <DayEndPhase state={state} dispatch={dispatch} />;
+    }
+    if (state.dayPhase === 'day-start') {
+      return <DayStartPhase state={state} dispatch={dispatch} />;
+    }
+
     switch (state.phase) {
       case 0: return <MainMenu state={state} dispatch={dispatch} />;
       case 1:
