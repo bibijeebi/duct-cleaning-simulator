@@ -7,6 +7,71 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+      /* Print styles for training certificate */
+      @media print {
+        body {
+          background: white !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* Hide everything except the certificate */
+        body > * {
+          display: none !important;
+        }
+
+        #root {
+          display: block !important;
+        }
+
+        /* Hide non-certificate elements */
+        .print-hide,
+        button,
+        h2,
+        .space-y-4 > *:not(.print-certificate) {
+          display: none !important;
+        }
+
+        /* Show and style the certificate */
+        .print-certificate {
+          display: block !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          padding: 0.5in !important;
+          box-sizing: border-box !important;
+        }
+
+        .print-certificate > div:first-child {
+          background: #18181b !important;
+          border: 4px solid #eab308 !important;
+          border-radius: 8px !important;
+          padding: 32px !important;
+          max-width: 7.5in !important;
+          margin: 0 auto !important;
+        }
+
+        /* Preserve colors in print */
+        .text-yellow-400 { color: #facc15 !important; }
+        .text-yellow-500 { color: #eab308 !important; }
+        .text-zinc-100 { color: #f4f4f5 !important; }
+        .text-zinc-200 { color: #e4e4e7 !important; }
+        .text-zinc-300 { color: #d4d4d8 !important; }
+        .text-zinc-400 { color: #a1a1aa !important; }
+        .text-zinc-500 { color: #71717a !important; }
+        .text-zinc-600 { color: #52525b !important; }
+        .text-zinc-700 { color: #3f3f46 !important; }
+        .text-green-400 { color: #4ade80 !important; }
+        .text-blue-400 { color: #60a5fa !important; }
+        .bg-zinc-800 { background-color: #27272a !important; }
+        .bg-zinc-900 { background-color: #18181b !important; }
+        .border-yellow-400 { border-color: #facc15 !important; }
+        .border-yellow-500 { border-color: #eab308 !important; }
+        .border-zinc-700 { border-color: #3f3f46 !important; }
+      }
     </style>
   </head>
   <body class="bg-zinc-950">

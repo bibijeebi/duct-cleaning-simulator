@@ -2788,6 +2788,7 @@ const initialState = {
   phase: 0,
   subPhase: 0,
   scenario: null,
+  traineeName: '',
   score: 100,
   paused: false,
   penalties: [],
@@ -2860,17 +2861,20 @@ function gameReducer(state, action) {
   switch (action.type) {
     case 'SELECT_SCENARIO':
       return { ...state, scenario: action.scenario };
+    case 'SET_TRAINEE_NAME':
+      return { ...state, traineeName: action.name };
     case 'START_GAME': {
       const customerPool = Object.entries(CUSTOMER_TYPES).filter(([k, v]) => v.scenarios.includes(state.scenario)).map(([k]) => k);
       const totalDays = state.scenario === 'courthouse' ? 3 : 1;
       const registers = generateRegistersForScenario(state.scenario);
       const screwsNeeded = registers.reduce((sum, r) => sum + r.screwCount, 0);
-      return { 
-        ...initialState, 
-        phase: 1, 
-        subPhase: 0, 
-        scenario: state.scenario, 
-        customerType: customerPool[Math.floor(Math.random() * customerPool.length)], 
+      return {
+        ...initialState,
+        phase: 1,
+        subPhase: 0,
+        scenario: state.scenario,
+        traineeName: state.traineeName,
+        customerType: customerPool[Math.floor(Math.random() * customerPool.length)],
         totalDays,
         registers,
         screwsNeeded,
@@ -7317,6 +7321,238 @@ function CompletionPhase({ state, dispatch }) {
 }
 
 // ============================================================================
+// TRAINING CERTIFICATE
+// ============================================================================
+
+function generateCertificateId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = '';
+  for (let i = 0; i < 6; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
+function getSkillsDemonstrated(state) {
+  const skills = [];
+
+  // Equipment & preparation skills
+  const missingCritical = Object.keys(EQUIPMENT_CATEGORIES).filter(cat =>
+    EQUIPMENT_CATEGORIES[cat].penalty === 'critical' &&
+    EQUIPMENT_CATEGORIES[cat].items.some(item => !state.equipment[item])
+  );
+  if (missingCritical.length === 0) {
+    skills.push('Proper equipment preparation');
+  }
+
+  // Vehicle inspection
+  if (state.vehicleInspectionComplete && !state.skippedInspection) {
+    skills.push('Vehicle pre-trip inspection');
+  }
+
+  // Customer communication (based on bonuses)
+  const communicationBonuses = state.bonuses.filter(b =>
+    b.reason?.toLowerCase().includes('communication') ||
+    b.reason?.toLowerCase().includes('rapport') ||
+    b.reason?.toLowerCase().includes('professional') ||
+    b.reason?.toLowerCase().includes('customer')
+  );
+  if (communicationBonuses.length > 0) {
+    skills.push('Customer communication');
+  }
+
+  // Hazard awareness
+  if (state.hazardsChecked) {
+    skills.push('Safety hazard identification');
+  }
+
+  // Duct cleaning quality
+  const excellentCleans = Object.values(state.ductsClean).filter(q => q === 'excellent').length;
+  const totalDucts = Object.keys(state.ductsClean).length;
+  if (totalDucts > 0 && excellentCleans / totalDucts >= 0.8) {
+    skills.push('Excellent duct cleaning technique');
+  } else if (totalDucts > 0 && excellentCleans / totalDucts >= 0.5) {
+    skills.push('Proper duct cleaning technique');
+  }
+
+  // Airflow direction
+  const correctAirflow = Object.values(state.ductsAirflowCorrect).filter(Boolean).length;
+  const totalAirflow = Object.keys(state.ductsAirflowCorrect).length;
+  if (totalAirflow > 0 && correctAirflow === totalAirflow) {
+    skills.push('Correct airflow direction understanding');
+  }
+
+  // Problem solving
+  if (state.problemsSolved.length > 0) {
+    skills.push('Field problem-solving');
+  }
+
+  // NADCA compliance
+  if (state.nadcaComplianceCount === state.nadcaComplianceTotal) {
+    skills.push('NADCA documentation compliance');
+  }
+
+  // Register handling
+  const intactRegisters = state.registers.filter(r => !r.damaged).length;
+  if (state.registers.length > 0 && intactRegisters === state.registers.length) {
+    skills.push('Careful register handling');
+  }
+
+  // Multi-day job management (courthouse)
+  if (state.scenario === 'courthouse' && state.totalDays > 1) {
+    skills.push('Multi-day job coordination');
+  }
+
+  // Return at least 3 skills, or generic ones if not enough earned
+  if (skills.length < 3) {
+    if (!skills.includes('Proper duct cleaning technique')) {
+      skills.push('Basic duct cleaning procedures');
+    }
+    if (skills.length < 3) {
+      skills.push('Job site safety awareness');
+    }
+    if (skills.length < 3) {
+      skills.push('Equipment operation');
+    }
+  }
+
+  return skills.slice(0, 6); // Max 6 skills
+}
+
+function TrainingCertificate({ state }) {
+  const [certificateId] = React.useState(() => generateCertificateId());
+
+  const getGrade = (score) => {
+    if (score >= 95) return 'A+';
+    if (score >= 90) return 'A';
+    if (score >= 85) return 'B+';
+    if (score >= 80) return 'B';
+    if (score >= 75) return 'C+';
+    if (score >= 70) return 'C';
+    return 'F';
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const skills = getSkillsDemonstrated(state);
+  const grade = getGrade(state.score);
+  const scenarioName = SCENARIOS[state.scenario]?.name || state.scenario;
+  const today = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const traineeName = state.traineeName?.trim() || 'Training Participant';
+
+  return (
+    <div className="print-certificate">
+      {/* Certificate Container */}
+      <div className="bg-zinc-900 border-4 border-yellow-500 rounded-lg p-8 relative overflow-hidden">
+        {/* Decorative corners */}
+        <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-yellow-400 rounded-tl-lg"></div>
+        <div className="absolute top-0 right-0 w-16 h-16 border-t-4 border-r-4 border-yellow-400 rounded-tr-lg"></div>
+        <div className="absolute bottom-0 left-0 w-16 h-16 border-b-4 border-l-4 border-yellow-400 rounded-bl-lg"></div>
+        <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-yellow-400 rounded-br-lg"></div>
+
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="text-yellow-400 text-sm font-bold tracking-widest mb-1">CAROLINA QUALITY AIR</div>
+          <h2 className="text-3xl font-black text-zinc-100 tracking-tight">Training Certificate</h2>
+          <div className="w-24 h-1 bg-yellow-500 mx-auto mt-3"></div>
+        </div>
+
+        {/* Main Content */}
+        <div className="text-center mb-6">
+          <p className="text-zinc-400 text-sm mb-2">This certifies that</p>
+          <p className="text-2xl font-bold text-yellow-400 mb-2">{traineeName}</p>
+          <p className="text-zinc-400 text-sm mb-4">has successfully completed training simulation</p>
+
+          <div className="bg-zinc-800 rounded-lg p-4 inline-block mb-4">
+            <p className="text-zinc-300 font-medium">{scenarioName}</p>
+          </div>
+        </div>
+
+        {/* Score & Grade */}
+        <div className="flex justify-center items-center gap-8 mb-6">
+          <div className="text-center">
+            <p className="text-zinc-500 text-xs uppercase tracking-wide mb-1">Final Score</p>
+            <p className="text-3xl font-black text-zinc-100">{state.score}/100</p>
+          </div>
+          <div className="w-px h-12 bg-zinc-700"></div>
+          <div className="text-center">
+            <p className="text-zinc-500 text-xs uppercase tracking-wide mb-1">Grade</p>
+            <p className={`text-3xl font-black ${
+              grade.startsWith('A') ? 'text-green-400' :
+              grade.startsWith('B') ? 'text-blue-400' :
+              'text-yellow-400'
+            }`}>{grade}</p>
+          </div>
+        </div>
+
+        {/* Skills Demonstrated */}
+        <div className="mb-6">
+          <p className="text-zinc-500 text-xs uppercase tracking-wide text-center mb-3">Skills Demonstrated</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {skills.map((skill, i) => (
+              <span key={i} className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs px-3 py-1 rounded-full">
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-zinc-700 pt-4 mt-4">
+          <div className="flex justify-between items-end text-xs text-zinc-500">
+            <div>
+              <p>Date: {today}</p>
+              <p>Certificate ID: {certificateId}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-zinc-600 italic max-w-xs">
+                This certifies completion of simulated training. Field supervision required.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Print Button (hidden when printing) */}
+      <div className="mt-4 text-center print-hide">
+        <button
+          onClick={handlePrint}
+          className="px-6 py-2 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded-lg transition-colors inline-flex items-center gap-2"
+        >
+          <span>🖨️</span> Print Certificate
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdditionalTrainingMessage({ state }) {
+  const scenarioName = SCENARIOS[state.scenario]?.name || state.scenario;
+
+  return (
+    <div className="bg-orange-900/30 border-2 border-orange-500 rounded-lg p-6 text-center">
+      <div className="text-4xl mb-3">📚</div>
+      <h3 className="text-xl font-bold text-orange-400 mb-2">Additional Training Recommended</h3>
+      <p className="text-zinc-400 mb-4">
+        Score of 70 or higher required for certification.
+      </p>
+      <p className="text-zinc-500 text-sm">
+        Current score: <span className="text-orange-400 font-bold">{state.score}/100</span> on {scenarioName}
+      </p>
+      <p className="text-zinc-600 text-sm mt-4 italic">
+        Review the penalties above and retry the scenario to improve your score.
+      </p>
+    </div>
+  );
+}
+
+// ============================================================================
 // RESULTS SCREEN
 // ============================================================================
 
@@ -7514,7 +7750,14 @@ function ResultsScreen({ state, dispatch }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      {/* Training Certificate or Additional Training Message */}
+      {state.score >= 70 ? (
+        <TrainingCertificate state={state} />
+      ) : (
+        <AdditionalTrainingMessage state={state} />
+      )}
+
+      <div className="grid grid-cols-2 gap-4 print-hide">
         <button onClick={() => dispatch({ type: 'START_GAME' })} className="py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">🔄 Retry This Job</button>
         <button onClick={() => dispatch({ type: 'RESET' })} className="py-3 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 font-bold rounded">🏠 Main Menu</button>
       </div>
@@ -7536,7 +7779,19 @@ function MainMenu({ state, dispatch }) {
           <p className="text-zinc-500">Carolina Quality Air Training System v1.3</p>
           <p className="text-zinc-600 text-sm mt-1">"Duct cleaning is 20% technique, 80% everything else."</p>
         </div>
-        
+
+        <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 mb-6">
+          <label className="block text-zinc-400 font-medium mb-2">Trainee Name (optional)</label>
+          <input
+            type="text"
+            value={state.traineeName}
+            onChange={(e) => dispatch({ type: 'SET_TRAINEE_NAME', name: e.target.value })}
+            placeholder="Enter your name for training certificate"
+            className="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-yellow-500 transition-colors"
+            maxLength={50}
+          />
+        </div>
+
         <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-6 mb-6">
           <h3 className="text-yellow-400 font-bold mb-4">🎮 Select Training Scenario</h3>
           <div className="space-y-3">
