@@ -109,6 +109,332 @@ const CUSTOMER_TYPES = {
   facilities: { name: 'Facilities Director', avatar: '🔧', color: '#14b8a6', scenarios: ['courthouse'] }
 };
 
+// ============================================================================
+// DIALOGUE TREES - Branching conversations for FirstContact phase
+// ============================================================================
+
+const DIALOGUE_TREES = {
+  helpful: {
+    start: 'greeting',
+    nodes: {
+      greeting: {
+        speaker: 'customer',
+        text: "Oh great, you're here! Let me show you where everything is. The air handler is in the attic - pull-down stairs are in the hallway. Want some coffee?",
+        choices: [
+          { text: "Thank you! Before I get set up, could you walk me through where all the vents are?", next: 'tour_offer', score: 5, reason: 'Professional thoroughness' },
+          { text: "Coffee sounds great, thanks! I'll get my equipment situated after.", next: 'coffee', score: 2, reason: 'Building rapport' },
+          { text: "Thanks, I'll find everything myself.", next: 'independent', score: 0, reason: null }
+        ]
+      },
+      tour_offer: {
+        speaker: 'customer',
+        text: "Absolutely! There's 9 vents total - 2 in the living room, one in each bedroom... Oh, and heads up, the master bedroom vent makes a weird noise. That's actually why we called you!",
+        choices: [
+          { text: "Good to know about that noise - I'll pay extra attention there and let you know what I find.", next: null, score: 3, reason: 'Active listening' },
+          { text: "Got it, thanks for the tour.", next: null, score: 0, reason: null }
+        ]
+      },
+      coffee: {
+        speaker: 'customer',
+        text: "Here you go! Oh by the way, our dog Baxter is in the backyard. He's friendly but loud. Just don't open that back door!",
+        choices: [
+          { text: "Thanks for the heads up - I'll make sure all doors stay secure.", next: null, score: 2, reason: 'Attention to detail' },
+          { text: "No problem, I'll be careful.", next: null, score: 0, reason: null }
+        ]
+      },
+      independent: {
+        speaker: 'customer',
+        text: "Okay! I'll be in the kitchen if you need anything. Oh, the circuit breaker is in the garage if you need it.",
+        choices: [
+          { text: "Perfect, thanks. I'll let you know before I start any loud equipment.", next: null, score: 2, reason: 'Courteous communication' },
+          { text: "Got it.", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  suspicious: {
+    start: 'greeting',
+    nodes: {
+      greeting: {
+        speaker: 'customer',
+        text: "You're from the duct cleaning company? Let me see some ID. I need to know exactly what you're going to do - I've read about scam duct cleaners online.",
+        choices: [
+          { text: "Absolutely. Here's my ID and business card. I completely understand - let me walk you through our entire process step by step.", next: 'reassured', score: 5, reason: 'Professional reassurance' },
+          { text: "Here's my ID. We spoke on the phone about the appointment.", next: 'still_wary', score: 0, reason: null },
+          { text: "Ma'am, we're a legitimate company. Can you just show me where the air handler is?", next: 'defensive', score: -5, reason: 'Dismissive of concerns' }
+        ]
+      },
+      reassured: {
+        speaker: 'customer',
+        text: "Okay, that's... more professional than I expected. But what about damage? I just had these floors refinished. And I want before and after photos of everything.",
+        choices: [
+          { text: "I'll lay drop cloths on all walking paths and take photos before we start. I can text them to you too if you'd like a copy.", next: 'trust_built', score: 5, reason: 'Exceeding expectations' },
+          { text: "We use drop cloths and I'll be careful.", next: null, score: 0, reason: null }
+        ]
+      },
+      still_wary: {
+        speaker: 'customer',
+        text: "Fine. But I'm watching everything. If I see anything sketchy, I'm calling your office. And don't try to upsell me on anything.",
+        choices: [
+          { text: "Understood. I'll explain everything as I go, and I'll only recommend what I actually see in your ducts.", next: null, score: 2, reason: 'Setting clear expectations' },
+          { text: "That's fine. Where's the thermostat?", next: null, score: -3, reason: 'Missed rapport opportunity' }
+        ]
+      },
+      defensive: {
+        speaker: 'customer',
+        text: "Excuse me? I have every right to ask questions in my own home. Maybe I should call your office and talk to your supervisor.",
+        choices: [
+          { text: "You're absolutely right, I apologize. Let me start over - here's my ID, and I'm happy to answer any questions.", next: 'recovery', score: 0, reason: 'Recovered from poor start' },
+          { text: "Go ahead and call. I'm just here to do my job.", next: null, score: -10, reason: 'Escalated conflict with customer' }
+        ]
+      },
+      recovery: {
+        speaker: 'customer',
+        text: "*sighs* Fine. Just... be careful, okay? This is my home.",
+        choices: [
+          { text: "I understand completely. I'll treat it with respect.", next: null, score: 0, reason: null }
+        ]
+      },
+      trust_built: {
+        speaker: 'customer',
+        text: "Alright, you seem like you know what you're doing. Let me show you where the attic access is. ...Sorry if I came on strong. We had a bad experience with a contractor last year.",
+        choices: [
+          { text: "No need to apologize - I appreciate customers who ask questions. Keeps us accountable.", next: null, score: 3, reason: 'Empathy and professionalism' }
+        ]
+      }
+    }
+  },
+
+  micromanager: {
+    start: 'greeting',
+    nodes: {
+      greeting: {
+        speaker: 'customer',
+        text: "Finally! I've been waiting all morning. I need to watch everything you do - I've seen videos online of duct cleaners just blowing air around and leaving. You ARE cleaning every single vent, right?",
+        choices: [
+          { text: "Every single one. In fact, would you like to see the process? I can show you before and after on each vent.", next: 'engaged', score: 5, reason: 'Turned concern into collaboration' },
+          { text: "Yes, we clean everything thoroughly. It takes about 3-4 hours.", next: 'skeptical', score: 0, reason: null },
+          { text: "We've been doing this for years. We know what we're doing.", next: 'confrontational', score: -5, reason: 'Dismissive of concerns' }
+        ]
+      },
+      engaged: {
+        speaker: 'customer',
+        text: "Really? You'd let me watch? ...Most contractors get annoyed when I ask questions. What kind of equipment do you use? Is it the good kind?",
+        choices: [
+          { text: "Happy to explain! This is a truck-mounted vacuum - much more powerful than portable units. And this whip attachment agitates the debris loose.", next: 'ally', score: 5, reason: 'Educational approach' },
+          { text: "It's professional-grade equipment, industry standard.", next: null, score: 0, reason: null }
+        ]
+      },
+      skeptical: {
+        speaker: 'customer',
+        text: "3-4 hours? The last company was done in 45 minutes. That's actually why I called you guys for a second opinion.",
+        choices: [
+          { text: "45 minutes isn't enough time to do it right. Real duct cleaning takes time - I'd rather do it once and do it properly.", next: 'warming', score: 3, reason: 'Honest assessment' },
+          { text: "We take our time to be thorough.", next: null, score: 0, reason: null }
+        ]
+      },
+      confrontational: {
+        speaker: 'customer',
+        text: "Experience doesn't mean anything if you're cutting corners. I've done my research. I know what proper duct cleaning is supposed to look like.",
+        choices: [
+          { text: "You're right, and I respect that you've done homework. Would you like to observe our process and verify we're doing it correctly?", next: 'recovery', score: 2, reason: 'Recovered with humility' },
+          { text: "Then you should know this takes a few hours. Can I get started?", next: null, score: -5, reason: 'Continued friction' }
+        ]
+      },
+      warming: {
+        speaker: 'customer',
+        text: "That's... actually reassuring. Okay. I'll try not to hover too much. But can I check the before and after photos?",
+        choices: [
+          { text: "Absolutely - I'll show you each vent before and after. You can take photos yourself too if you want.", next: null, score: 2, reason: 'Transparency builds trust' }
+        ]
+      },
+      ally: {
+        speaker: 'customer',
+        text: "Wow, that's actually really interesting! I had no idea there was that much to it. Okay, I'll let you work - but I might pop in to watch sometimes. Is that okay?",
+        choices: [
+          { text: "Anytime. If you have questions, just ask - I'd rather you understand what we're doing.", next: null, score: 3, reason: 'Customer became advocate' }
+        ]
+      },
+      recovery: {
+        speaker: 'customer',
+        text: "...Fine. Show me what you're going to do.",
+        choices: [
+          { text: "Here's the plan: returns first, then each supply vent, finishing with the main trunk line.", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  professional: {
+    start: 'greeting',
+    nodes: {
+      greeting: {
+        speaker: 'customer',
+        text: "Good morning. I'm Sarah Chen, office manager. Here's your building access card and alarm code - please don't lose them. Roof hatch key is at reception. Any questions?",
+        choices: [
+          { text: "Thank you. Quick question - what time does the last person usually leave? I want to make sure I don't accidentally lock anyone in.", next: 'impressed', score: 5, reason: 'Proactive thinking' },
+          { text: "Got it. Where's the breaker panel for the RTU?", next: 'business', score: 2, reason: 'Focused on task' },
+          { text: "Nope, I'll figure it out.", next: 'cold', score: -3, reason: 'Unprofessional response' }
+        ]
+      },
+      impressed: {
+        speaker: 'customer',
+        text: "Good question - Dr. Martinez sometimes works late, usually until 8. I'll text him you're here. The exam rooms have sensitive equipment, so please knock before entering.",
+        choices: [
+          { text: "Understood. I'll be mindful of the equipment and knock on any closed doors.", next: null, score: 3, reason: 'Attention to context' }
+        ]
+      },
+      business: {
+        speaker: 'customer',
+        text: "Main panel is in the utility closet at end of hall. The RTU has its own disconnect on the roof. Here's a building layout.",
+        choices: [
+          { text: "Perfect, this helps. I'll text you before I start any loud equipment.", next: null, score: 2, reason: 'Communication plan' },
+          { text: "Great, thanks.", next: null, score: 0, reason: null }
+        ]
+      },
+      cold: {
+        speaker: 'customer',
+        text: "*raises eyebrow* Okay then. Call the main line if you have problems. Not my cell.",
+        choices: [
+          { text: "Actually, could I get that building layout? It would help.", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  security: {
+    start: 'greeting',
+    nodes: {
+      greeting: {
+        speaker: 'customer',
+        text: "Hold up. I need to see ID and your work order. You'll also need to sign the visitor log. Escort required to mechanical areas - no exceptions. Building policy.",
+        choices: [
+          { text: "No problem at all. Here's my ID and work order. I appreciate the security - happy to follow your protocols.", next: 'cooperative', score: 5, reason: 'Respecting authority' },
+          { text: "Here's my ID. The facilities manager should have me on the list.", next: 'by_the_book', score: 0, reason: null },
+          { text: "All this for duct cleaning? Seems like overkill.", next: 'pushback', score: -5, reason: 'Challenged security protocol' }
+        ]
+      },
+      cooperative: {
+        speaker: 'customer',
+        text: "Good. Most contractors complain. Sign here. Your escort is Officer Davis - she knows the mechanical rooms. Courthouse closes at 5, so coordinate with her on timing.",
+        choices: [
+          { text: "Understood. What's the best way to reach her if we get separated?", next: null, score: 3, reason: 'Practical planning' },
+          { text: "Got it. When can we get started?", next: null, score: 0, reason: null }
+        ]
+      },
+      by_the_book: {
+        speaker: 'customer',
+        text: "*checks clipboard* ...Martinez. Yeah, you're on here. Escort will be ready in 10 minutes. Wait in the lobby.",
+        choices: [
+          { text: "I'll use the time to review the work order. Thanks.", next: null, score: 2, reason: 'Productive use of wait time' },
+          { text: "Can we speed this up? I've got a lot of ground to cover.", next: null, score: -3, reason: 'Impatient with process' }
+        ]
+      },
+      pushback: {
+        speaker: 'customer',
+        text: "*steps closer* Sir, this is a county courthouse. We've had threats. Everyone follows the same rules. ID. Now.",
+        choices: [
+          { text: "You're right, I apologize. Here's my ID and work order.", next: 'recovery', score: 0, reason: 'Backed down appropriately' },
+          { text: "*hands over ID* Fine. Here.", next: null, score: -5, reason: 'Continued hostility' }
+        ]
+      },
+      recovery: {
+        speaker: 'customer',
+        text: "*examines ID* Alright. Follow the rules and we won't have problems. Your escort will be ready in 10 minutes.",
+        choices: [
+          { text: "Understood. I appreciate what you do here.", next: null, score: 2, reason: 'Made amends' }
+        ]
+      }
+    }
+  },
+
+  absent: {
+    start: 'text_received',
+    nodes: {
+      text_received: {
+        speaker: 'customer',
+        text: "[Text message] 'Hey! Running late, stuck in traffic. Key is under the mat by the door. Alarm code is 1234. Make yourself at home - text me when you're done!'",
+        choices: [
+          { text: "[Reply] 'No problem! I'll take photos before entering and document everything. What's a good number if I have questions?'", next: 'responsible', score: 5, reason: 'Documentation protocol' },
+          { text: "[Reply] 'Got it, thanks. I'll text when done.'", next: 'standard', score: 2, reason: 'Basic communication' },
+          { text: "Let yourself in without replying.", next: 'silent', score: -3, reason: 'No communication' }
+        ]
+      },
+      responsible: {
+        speaker: 'customer',
+        text: "[Reply] 'Smart thinking! This number works. Oh - the cat might be wandering around, his name is Chairman Meow. Please don't let him out! 😅'",
+        choices: [
+          { text: "[Reply] 'Ha! I'll keep Chairman Meow contained. Starting in 5 min.'", next: null, score: 2, reason: 'Personal connection' },
+          { text: "[Take photo of key location, then enter]", next: null, score: 0, reason: null }
+        ]
+      },
+      standard: {
+        speaker: 'customer',
+        text: "[Reply] '👍'",
+        choices: [
+          { text: "[Take photo of key location before entering]", next: null, score: 2, reason: 'CYA documentation' },
+          { text: "[Enter and start working]", next: null, score: 0, reason: null }
+        ]
+      },
+      silent: {
+        speaker: 'system',
+        text: "You enter the home without sending a confirmation text.",
+        choices: [
+          { text: "[Take entry photo anyway for documentation]", next: null, score: 2, reason: 'Late documentation better than none' },
+          { text: "[Just start working]", next: null, score: -5, reason: 'No documentation trail' }
+        ]
+      }
+    }
+  },
+
+  facilities: {
+    start: 'greeting',
+    nodes: {
+      greeting: {
+        speaker: 'customer',
+        text: "Welcome to Durham County Courthouse. Jeff Martinez, Facilities. We've got 47 PTAC units across three floors - it's a big job. Security will escort you. We need to work around court schedules. Got your crew?",
+        choices: [
+          { text: "Yes, four of us today. Before we start, can we review the floor plan and court schedule together? I want to avoid any disruptions.", next: 'planning', score: 5, reason: 'Collaborative planning' },
+          { text: "Crew's ready. Which floor should we start on?", next: 'direct', score: 2, reason: 'Ready to work' },
+          { text: "We'll figure it out as we go. Just need building access.", next: 'cowboy', score: -5, reason: 'No coordination' }
+        ]
+      },
+      planning: {
+        speaker: 'customer',
+        text: "Perfect - that's what I like to hear. Here's the layout. Floor 1 has Courtrooms A and B - Judge Patterson is in session until 3, but Judge Williams is out today. Floor 2 has been quieter.",
+        choices: [
+          { text: "Let's start Floor 2 then, and hit the Floor 1 courtrooms during lunch recess. What time is that usually?", next: null, score: 5, reason: 'Strategic scheduling' },
+          { text: "We'll start wherever's open and work around the schedule.", next: null, score: 0, reason: null }
+        ]
+      },
+      direct: {
+        speaker: 'customer',
+        text: "Second floor is probably best to start - most offices are empty this morning. Radio me when you're ready to move into the courtrooms.",
+        choices: [
+          { text: "Will do. What radio channel should we use?", next: null, score: 2, reason: 'Communication setup' },
+          { text: "Got it, thanks.", next: null, score: 0, reason: null }
+        ]
+      },
+      cowboy: {
+        speaker: 'customer',
+        text: "*frowns* This is a county courthouse, not a strip mall. We have active cases, judges, sensitive areas. You need to coordinate with me.",
+        choices: [
+          { text: "You're right, I apologize. Let's start over - what's the best approach for this building?", next: 'recovery', score: 0, reason: 'Course correction' },
+          { text: "Fine, just tell us where we can work.", next: null, score: -3, reason: 'Continued friction' }
+        ]
+      },
+      recovery: {
+        speaker: 'customer',
+        text: "*sighs* Second floor, east wing. I'll get you a radio. Next time, lead with the planning.",
+        choices: [
+          { text: "Understood. We'll check in before moving to each new area.", next: null, score: 2, reason: 'Made amends' }
+        ]
+      }
+    }
+  }
+};
+
 const DUCT_MATERIALS = {
   rigid: { name: 'Rigid Metal', allowedTools: ['aggressive_whip', 'rotating_brush', 'air_wash'], color: '#64748b', warning: 'Watch for sharp seam edges' },
   flex: { name: 'Flex Duct', allowedTools: ['gentle_whip', 'air_wash'], color: '#fbbf24', warning: 'Aggressive whip = collapse/tear' },
@@ -1264,42 +1590,189 @@ function RoutePlanning({ state, dispatch }) {
 
 function FirstContact({ state, dispatch }) {
   const customer = CUSTOMER_TYPES[state.customerType];
-  const dialogues = {
-    helpful: { text: "Oh great, you're here! Let me show you where everything is. The air handler is in the attic, pull-down stairs are in the hallway. Coffee?", choices: [{ text: "Thank you! I'd love to take a look at the system first.", bonus: 3 }, { text: "Thanks, let me get my equipment set up.", next: 'survey' }, { text: "Where's the thermostat?", next: 'survey' }] },
-    suspicious: { text: "You're from the duct cleaning company? Do you have ID? How long is this going to take? I don't want you tracking dirt everywhere.", choices: [{ text: "Absolutely, here's my ID and I'll use drop cloths to protect your floors.", bonus: 5 }, { text: "Yes, we spoke on the phone. This should take 3-4 hours.", next: 'survey' }, { text: "Can you just show me the air handler?", penalty: 3 }] },
-    micromanager: { text: "Finally! I've been waiting. I want to watch everything you do. I've heard horror stories about duct cleaners. You ARE going to clean every single vent, right?", choices: [{ text: "Of course! I'll walk you through the entire process. Would you like to see the before photos?", bonus: 5 }, { text: "Yes, we clean everything. I'll show you as we go.", next: 'survey' }, { text: "We know what we're doing.", penalty: 5 }] },
-    professional: { text: "Good morning. I'm the office manager. Here's the building access card and alarm code. Roof hatch key is at the front desk. Any questions?", choices: [{ text: "Perfect, thank you. I'll check in before we start on the roof.", bonus: 3 }, { text: "Got it. Where's the breaker panel?", next: 'survey' }, { text: "We'll get started.", next: 'survey' }] },
-    security: { text: "Hold up. I need to see ID and your work order. You'll need an escort to the mechanical areas. Sign in here.", choices: [{ text: "No problem. Here's everything. Happy to work with your security protocols.", bonus: 5 }, { text: "Here's my ID. When can we get started?", next: 'survey' }, { text: "This is excessive for duct cleaning.", penalty: 5 }] },
-    absent: { text: "[Text message received] 'Running late. Key is under the mat. Alarm code is 1234. Make yourself at home, text me when done.'", choices: [{ text: "Document the key location with a photo before entering.", bonus: 3 }, { text: "Let yourself in and get started.", next: 'survey' }, { text: "Text back: 'No problem, I'll document everything.'", bonus: 2 }] },
-    facilities: { text: "Welcome to Durham County Courthouse. I'm Jeff Martinez, Facilities. We've got 47 PTAC units across three floors. Security will escort you. We'll need to work around court schedules.", choices: [{ text: "Understood. Let's review the floor plan and court schedule together.", bonus: 5 }, { text: "47 units, got it. Which floor should we start on?", next: 'survey' }, { text: "Can we just get access and figure it out?", penalty: 3 }] }
-  };
-  
+  const dialogueTree = DIALOGUE_TREES[state.customerType];
+
+  const [currentNodeId, setCurrentNodeId] = useState(dialogueTree?.start || 'greeting');
+  const [scoreHistory, setScoreHistory] = useState([]);
+  const [showingFeedback, setShowingFeedback] = useState(false);
+  const [lastChoice, setLastChoice] = useState(null);
+  const [dialogueComplete, setDialogueComplete] = useState(false);
+
+  const currentNode = dialogueTree?.nodes[currentNodeId];
+
   const handleChoice = (choice) => {
-    if (choice.bonus) dispatch({ type: 'ADD_BONUS', reason: 'Professional first contact', points: choice.bonus });
-    if (choice.penalty) dispatch({ type: 'ADD_PENALTY', reason: 'Poor customer interaction', points: choice.penalty });
-    dispatch({ type: 'SET_DIALOGUE', dialogue: null });
+    // Record this choice for feedback
+    setLastChoice(choice);
+    setShowingFeedback(true);
+
+    // Apply score immediately
+    if (choice.score > 0) {
+      dispatch({ type: 'ADD_BONUS', reason: choice.reason || 'Good customer interaction', points: choice.score });
+    } else if (choice.score < 0) {
+      dispatch({ type: 'ADD_PENALTY', reason: choice.reason || 'Poor customer interaction', points: Math.abs(choice.score) });
+    }
+
+    // Track score history for summary
+    if (choice.score !== 0) {
+      setScoreHistory(prev => [...prev, { score: choice.score, reason: choice.reason }]);
+    }
+  };
+
+  const handleContinue = () => {
+    setShowingFeedback(false);
+
+    if (lastChoice.next) {
+      // Navigate to next node
+      setCurrentNodeId(lastChoice.next);
+      setLastChoice(null);
+    } else {
+      // Dialogue complete - show summary then transition
+      setDialogueComplete(true);
+    }
+  };
+
+  const handleFinish = () => {
     dispatch({ type: 'SET_SUBPHASE', subPhase: 1 });
   };
-  
-  useEffect(() => {
-    dispatch({ type: 'SET_DIALOGUE', dialogue: { speaker: 'customer', ...dialogues[state.customerType] } });
-  }, []);
-  
+
+  // Calculate total score impact
+  const totalScore = scoreHistory.reduce((sum, item) => sum + item.score, 0);
+
+  // Dialogue complete - show summary
+  if (dialogueComplete) {
+    return (
+      <div className="space-y-4">
+        <div className={`border-2 rounded-lg p-6 ${totalScore >= 5 ? 'bg-green-900/30 border-green-500' : totalScore >= 0 ? 'bg-zinc-800/50 border-yellow-500/50' : 'bg-red-900/30 border-red-500'}`}>
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-4xl">{customer.avatar}</span>
+            <div>
+              <h3 className={`font-bold text-xl ${totalScore >= 5 ? 'text-green-400' : totalScore >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                First Contact Complete
+              </h3>
+              <p className="text-zinc-400">{customer.name}</p>
+            </div>
+          </div>
+
+          {scoreHistory.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <p className="text-zinc-500 text-sm font-bold uppercase">Conversation Impact:</p>
+              {scoreHistory.map((item, i) => (
+                <div key={i} className={`flex justify-between text-sm px-3 py-1 rounded ${item.score > 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                  <span>{item.reason}</span>
+                  <span className="font-bold">{item.score > 0 ? '+' : ''}{item.score}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className={`text-center py-3 rounded ${totalScore >= 5 ? 'bg-green-900/50' : totalScore >= 0 ? 'bg-zinc-900' : 'bg-red-900/50'}`}>
+            <p className="text-zinc-400 text-sm">Rapport Score</p>
+            <p className={`text-2xl font-bold ${totalScore >= 5 ? 'text-green-400' : totalScore >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+              {totalScore >= 5 ? 'Excellent' : totalScore >= 2 ? 'Good' : totalScore >= 0 ? 'Neutral' : totalScore >= -5 ? 'Strained' : 'Poor'}
+            </p>
+            <p className={`text-sm ${totalScore >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {totalScore > 0 ? '+' : ''}{totalScore} points
+            </p>
+          </div>
+        </div>
+        <button onClick={handleFinish} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
+          Continue to Site Survey →
+        </button>
+      </div>
+    );
+  }
+
+  // Showing feedback after a choice
+  if (showingFeedback && lastChoice) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-3xl">👷</span>
+            <div className="flex-1">
+              <p className="text-zinc-500 text-xs uppercase">Your Response</p>
+              <p className="text-zinc-200">{lastChoice.text}</p>
+            </div>
+          </div>
+
+          {lastChoice.score !== 0 && (
+            <div className={`p-3 rounded-lg ${lastChoice.score > 0 ? 'bg-green-900/30 border border-green-500/50' : 'bg-red-900/30 border border-red-500/50'}`}>
+              <div className="flex justify-between items-center">
+                <span className={lastChoice.score > 0 ? 'text-green-400' : 'text-red-400'}>
+                  {lastChoice.score > 0 ? '✓' : '✗'} {lastChoice.reason}
+                </span>
+                <span className={`font-bold ${lastChoice.score > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {lastChoice.score > 0 ? '+' : ''}{lastChoice.score}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <button onClick={handleContinue} className="w-full mt-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
+            {lastChoice.next ? 'Continue Conversation →' : 'Finish Conversation →'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show current dialogue node
+  if (!currentNode) return null;
+
   return (
     <div className="space-y-4">
-      {state.currentDialogue && (
-        <DialogueBox dialogue={state.currentDialogue} onChoice={handleChoice} customerType={state.customerType} />
-      )}
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
-        <h3 className="text-yellow-400 font-bold mb-2">🤝 First Contact</h3>
-        <div className="flex items-center gap-3 p-3 bg-zinc-900 rounded border border-zinc-700">
+        <h3 className="text-yellow-400 font-bold mb-4">🤝 First Contact</h3>
+
+        {/* Customer info */}
+        <div className="flex items-center gap-3 p-3 bg-zinc-900 rounded border border-zinc-700 mb-4">
           <span className="text-3xl">{customer.avatar}</span>
           <div>
             <p className="text-zinc-200 font-bold">{customer.name}</p>
-            <p className="text-zinc-500 text-sm">Waiting for interaction...</p>
+            <p className="text-zinc-500 text-sm">{SCENARIOS[state.scenario]?.name}</p>
           </div>
         </div>
+
+        {/* Dialogue bubble */}
+        <div className="bg-zinc-900 rounded-lg p-4 border-l-4 border-yellow-500 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">{currentNode.speaker === 'customer' ? customer.avatar : currentNode.speaker === 'system' ? '📱' : '👷'}</span>
+            <span className="text-zinc-400 text-sm font-bold">
+              {currentNode.speaker === 'customer' ? customer.name : currentNode.speaker === 'system' ? 'System' : 'You'}
+            </span>
+          </div>
+          <p className="text-zinc-100 leading-relaxed">{currentNode.text}</p>
+        </div>
+
+        {/* Response choices */}
+        <div className="space-y-2">
+          <p className="text-zinc-500 text-sm">Choose your response:</p>
+          {currentNode.choices.map((choice, i) => (
+            <button
+              key={i}
+              onClick={() => handleChoice(choice)}
+              className="w-full p-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-yellow-500 rounded-lg text-left transition-all group"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-yellow-500 font-bold">{i + 1}.</span>
+                <span className="text-zinc-200 group-hover:text-zinc-100">{choice.text}</span>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Score tracker */}
+      {scoreHistory.length > 0 && (
+        <div className="bg-zinc-900 rounded p-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-zinc-500">Conversation Progress</span>
+            <span className={totalScore >= 0 ? 'text-green-400' : 'text-red-400'}>
+              {totalScore > 0 ? '+' : ''}{totalScore} pts
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

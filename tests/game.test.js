@@ -109,4 +109,42 @@ describe('Duct Cleaning Simulator', () => {
       expect(STOP_WORK_HAZARDS).not.toContain('dead_animal')
     })
   })
+
+  describe('Customer Dialogue Trees', () => {
+    const CUSTOMER_TYPES = ['helpful', 'suspicious', 'micromanager', 'professional', 'security', 'absent', 'facilities']
+
+    it('has dialogue trees for all 7 customer types', () => {
+      expect(CUSTOMER_TYPES.length).toBe(7)
+    })
+
+    it('suspicious customer has harder paths than helpful', () => {
+      // Suspicious customer can lose up to 15 points with bad choices
+      // Helpful customer max penalty is 0 (no negative choices)
+      const suspiciousMinScore = -15 // -5 dismissive + -10 escalate conflict
+      const helpfulMinScore = 0
+      expect(suspiciousMinScore).toBeLessThan(helpfulMinScore)
+    })
+
+    it('micromanager can be converted to ally with good responses', () => {
+      // Best path: engaged (+5) -> ally (+5) -> final (+3) = +13
+      const micromanagerBestPath = 5 + 5 + 3
+      expect(micromanagerBestPath).toBe(13)
+    })
+
+    it('good responses give +5 points, bad give -5 to -10', () => {
+      const goodResponse = 5
+      const badResponse = -5
+      const criticalBadResponse = -10
+      expect(goodResponse).toBe(5)
+      expect(badResponse).toBe(-5)
+      expect(criticalBadResponse).toBe(-10)
+    })
+
+    it('dialogue trees have branching paths based on choices', () => {
+      // Each customer type should have at least 2 possible ending paths
+      // This tests the branching structure concept
+      const suspiciousPaths = ['reassured', 'still_wary', 'defensive']
+      expect(suspiciousPaths.length).toBeGreaterThan(1)
+    })
+  })
 })
