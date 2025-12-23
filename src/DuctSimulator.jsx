@@ -1516,6 +1516,7 @@ const initialState = {
   problemsEncountered: [],
   problemsSolved: [],
   photosDocumented: false,
+  ductPhotos: {}, // { ductId: { before: true, after: true, quality: 'excellent' } }
   customerWalkthrough: false,
   currentDialogue: null,
   dialogueHistory: [],
@@ -1620,6 +1621,19 @@ function gameReducer(state, action) {
       return { ...state, problemsSolved: [...state.problemsSolved, action.problem] };
     case 'DOCUMENT_PHOTOS':
       return { ...state, photosDocumented: true };
+    case 'TAKE_DUCT_PHOTO':
+      return {
+        ...state,
+        ductPhotos: {
+          ...state.ductPhotos,
+          [action.ductId]: {
+            before: true,
+            after: true,
+            quality: state.ductsClean[action.ductId] || 'good',
+            ductName: action.ductName
+          }
+        }
+      };
     case 'COMPLETE_WALKTHROUGH':
       return { ...state, customerWalkthrough: true };
     case 'SET_DIALOGUE':
@@ -3336,6 +3350,383 @@ function DuctCleaning({ state, dispatch }) {
 // PHASE 5: COMPLETION
 // ============================================================================
 
+// Simulated dust visualization - generates a "debris pattern" for before/after photos
+function DuctPhotoVisualization({ isBefore, quality, material }) {
+  const debrisColors = {
+    heavy: ['#8B7355', '#6B5344', '#9C8B76', '#7D6B5A'],
+    medium: ['#9C8B76', '#B5A38E', '#8B7355', '#A69580'],
+    light: ['#B5A38E', '#C4B3A0', '#A69580', '#D4C4B5']
+  };
+
+  const cleanColors = {
+    excellent: '#6B7280', // Clean gray
+    good: '#78716C',
+    poor: '#8B8178'
+  };
+
+  const materialBg = {
+    rigid: '#52525B',
+    flex: '#57534E',
+    ductboard: '#64748B',
+    lined: '#475569'
+  };
+
+  if (isBefore) {
+    // Generate debris particles for "dirty" visualization
+    const particleCount = 25 + Math.floor(Math.random() * 20);
+    const colors = debrisColors.heavy;
+
+    return (
+      <div
+        className="relative w-full h-24 rounded overflow-hidden border-2 border-zinc-600"
+        style={{ backgroundColor: materialBg[material] || '#52525B' }}
+      >
+        {/* Debris layer */}
+        <div className="absolute inset-0 opacity-80">
+          {Array.from({ length: particleCount }, (_, i) => {
+            const size = 4 + Math.random() * 12;
+            const left = Math.random() * 95;
+            const top = Math.random() * 85;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const blur = Math.random() > 0.5 ? '1px' : '0px';
+
+            return (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: `${size}px`,
+                  height: `${size * (0.6 + Math.random() * 0.4)}px`,
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  backgroundColor: color,
+                  filter: `blur(${blur})`,
+                  transform: `rotate(${Math.random() * 360}deg)`
+                }}
+              />
+            );
+          })}
+        </div>
+        {/* Dust film overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,115,85,0.4) 0%, rgba(107,83,68,0.5) 50%, rgba(156,139,118,0.3) 100%)'
+          }}
+        />
+        <span className="absolute bottom-1 left-2 text-xs text-zinc-300 font-bold bg-black/50 px-1 rounded">BEFORE</span>
+      </div>
+    );
+  } else {
+    // Clean duct visualization
+    return (
+      <div
+        className="relative w-full h-24 rounded overflow-hidden border-2 border-green-600"
+        style={{ backgroundColor: cleanColors[quality] || cleanColors.good }}
+      >
+        {/* Clean metallic sheen */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)`
+          }}
+        />
+        {/* Quality indicator */}
+        {quality === 'excellent' && (
+          <div className="absolute top-1 right-1">
+            <span className="text-green-400 text-lg">✨</span>
+          </div>
+        )}
+        <span className="absolute bottom-1 left-2 text-xs text-green-300 font-bold bg-black/50 px-1 rounded">AFTER</span>
+      </div>
+    );
+  }
+}
+
+function PhotoDocumentation({ state, dispatch, onComplete }) {
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showFlash, setShowFlash] = useState(false);
+
+  // Get all cleaned ducts
+  const ducts = state.scenario === 'courthouse'
+    ? getCourthouseDuctsForDay(state.currentDay)
+    : (SCENARIO_DUCTS[state.scenario] || []);
+
+  const cleanedDucts = ducts.filter(d => state.ductsClean[d.id]);
+  const currentDuct = cleanedDucts[currentPhotoIndex];
+  const photosTaken = Object.keys(state.ductPhotos).length;
+  const allPhotosTaken = photosTaken >= cleanedDucts.length;
+
+  const handleTakePhoto = () => {
+    if (!currentDuct) return;
+
+    setShowFlash(true);
+    setTimeout(() => setShowFlash(false), 200);
+
+    dispatch({
+      type: 'TAKE_DUCT_PHOTO',
+      ductId: currentDuct.id,
+      ductName: currentDuct.name
+    });
+
+    // Move to next duct after a brief delay
+    setTimeout(() => {
+      if (currentPhotoIndex < cleanedDucts.length - 1) {
+        setCurrentPhotoIndex(i => i + 1);
+      }
+    }, 500);
+  };
+
+  const handleComplete = () => {
+    dispatch({ type: 'DOCUMENT_PHOTOS' });
+    dispatch({ type: 'ADD_BONUS', reason: 'Complete photo documentation', points: 5 });
+    onComplete();
+  };
+
+  const handleSkip = () => {
+    dispatch({ type: 'ADD_PENALTY', reason: 'Incomplete photo documentation', points: 3 });
+    onComplete();
+  };
+
+  const material = currentDuct ? (DUCT_MATERIALS[currentDuct.material]?.name || currentDuct.material) : '';
+
+  return (
+    <div className="space-y-4">
+      {/* Flash effect */}
+      {showFlash && (
+        <div className="fixed inset-0 bg-white z-50 animate-pulse" style={{ animationDuration: '0.2s' }} />
+      )}
+
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-yellow-400 font-bold">📸 Photo Documentation</h3>
+          <span className="text-zinc-400 text-sm">{photosTaken}/{cleanedDucts.length} photos</span>
+        </div>
+
+        <p className="text-zinc-400 text-sm mb-4">
+          Document before/after photos of each cleaned duct. These photos build customer trust and serve as proof of work.
+        </p>
+
+        {currentDuct && !state.ductPhotos[currentDuct.id] ? (
+          <div className="space-y-4">
+            {/* Current duct info */}
+            <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+              <p className="text-zinc-200 font-bold">{currentDuct.name}</p>
+              <p className="text-zinc-500 text-sm">{material} • {currentDuct.length}</p>
+              <p className="text-sm mt-1">
+                <span className={`${state.ductsClean[currentDuct.id] === 'excellent' ? 'text-green-400' : state.ductsClean[currentDuct.id] === 'good' ? 'text-yellow-400' : 'text-orange-400'}`}>
+                  Cleaning quality: {state.ductsClean[currentDuct.id]}
+                </span>
+              </p>
+            </div>
+
+            {/* Before/After visualization */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-zinc-500 text-xs mb-1 uppercase">Before</p>
+                <DuctPhotoVisualization isBefore={true} material={currentDuct.material} />
+              </div>
+              <div>
+                <p className="text-zinc-500 text-xs mb-1 uppercase">After</p>
+                <DuctPhotoVisualization isBefore={false} quality={state.ductsClean[currentDuct.id]} material={currentDuct.material} />
+              </div>
+            </div>
+
+            {/* Take photo button */}
+            <button
+              onClick={handleTakePhoto}
+              className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded flex items-center justify-center gap-2 transition-all"
+            >
+              <span className="text-xl">📷</span>
+              Take Photo
+            </button>
+          </div>
+        ) : allPhotosTaken ? (
+          <div className="space-y-4">
+            {/* Photo gallery preview */}
+            <div className="bg-green-900/30 border border-green-500 rounded-lg p-4 text-center">
+              <span className="text-4xl">✅</span>
+              <h4 className="text-green-400 font-bold mt-2">All Photos Taken!</h4>
+              <p className="text-zinc-400 text-sm mt-1">{photosTaken} before/after comparisons documented</p>
+            </div>
+
+            {/* Mini gallery */}
+            <div className="bg-zinc-900 rounded p-3">
+              <p className="text-zinc-500 text-xs uppercase mb-2">Photo Gallery Preview</p>
+              <div className="grid grid-cols-3 gap-2">
+                {cleanedDucts.slice(0, 6).map(duct => (
+                  <div key={duct.id} className="aspect-video bg-zinc-800 rounded border border-zinc-700 flex items-center justify-center">
+                    <span className={`text-xs ${state.ductsClean[duct.id] === 'excellent' ? 'text-green-400' : 'text-zinc-400'}`}>
+                      {state.ductsClean[duct.id] === 'excellent' ? '✨' : '✓'}
+                    </span>
+                  </div>
+                ))}
+                {cleanedDucts.length > 6 && (
+                  <div className="aspect-video bg-zinc-800 rounded border border-zinc-700 flex items-center justify-center">
+                    <span className="text-xs text-zinc-500">+{cleanedDucts.length - 6}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleComplete}
+              className="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-all"
+            >
+              Continue to Customer Walkthrough →
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Show already-taken photos with navigation */}
+            <div className="bg-zinc-900 rounded p-3">
+              <p className="text-zinc-500 text-xs uppercase mb-2">Photos Taken</p>
+              <div className="flex flex-wrap gap-2">
+                {cleanedDucts.map((duct, idx) => (
+                  <button
+                    key={duct.id}
+                    onClick={() => setCurrentPhotoIndex(idx)}
+                    className={`w-8 h-8 rounded flex items-center justify-center text-xs transition-all ${
+                      state.ductPhotos[duct.id]
+                        ? 'bg-green-900/50 border border-green-500 text-green-400'
+                        : idx === currentPhotoIndex
+                        ? 'bg-yellow-500/20 border border-yellow-500 text-yellow-400'
+                        : 'bg-zinc-800 border border-zinc-700 text-zinc-500'
+                    }`}
+                  >
+                    {state.ductPhotos[duct.id] ? '✓' : idx + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Current duct to photograph */}
+            {currentDuct && (
+              <>
+                <div className="bg-zinc-900 rounded p-3 border border-zinc-700">
+                  <p className="text-zinc-200 font-bold">{currentDuct.name}</p>
+                  <p className="text-zinc-500 text-sm">{material} • {currentDuct.length}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-zinc-500 text-xs mb-1 uppercase">Before</p>
+                    <DuctPhotoVisualization isBefore={true} material={currentDuct.material} />
+                  </div>
+                  <div>
+                    <p className="text-zinc-500 text-xs mb-1 uppercase">After</p>
+                    <DuctPhotoVisualization isBefore={false} quality={state.ductsClean[currentDuct.id]} material={currentDuct.material} />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleTakePhoto}
+                  className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded flex items-center justify-center gap-2 transition-all"
+                >
+                  <span className="text-xl">📷</span>
+                  Take Photo
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-zinc-900 rounded p-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-zinc-500">Documentation Progress</span>
+          <span className="text-zinc-400">{Math.round((photosTaken / cleanedDucts.length) * 100)}%</span>
+        </div>
+        <div className="w-full bg-zinc-700 rounded-full h-2 mt-2">
+          <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${(photosTaken / cleanedDucts.length) * 100}%` }}></div>
+        </div>
+      </div>
+
+      {/* Skip option */}
+      {!allPhotosTaken && photosTaken > 0 && (
+        <button
+          onClick={handleSkip}
+          className="w-full py-2 text-sm text-zinc-500 hover:text-orange-400 transition-all"
+        >
+          Skip remaining photos and continue (-3 points)
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Gallery component for CustomerWalkthrough
+function PhotoGallery({ state }) {
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+  const photos = Object.entries(state.ductPhotos).map(([ductId, data]) => ({
+    ductId,
+    ...data
+  }));
+
+  if (photos.length === 0) return null;
+
+  return (
+    <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-700">
+      <h4 className="text-zinc-400 font-bold text-sm uppercase mb-3">📸 Photo Documentation</h4>
+
+      {selectedPhoto ? (
+        <div className="space-y-3">
+          <button
+            onClick={() => setSelectedPhoto(null)}
+            className="text-yellow-400 text-sm hover:text-yellow-300"
+          >
+            ← Back to gallery
+          </button>
+          <div className="bg-zinc-800 rounded p-3">
+            <p className="text-zinc-200 font-bold mb-2">{selectedPhoto.ductName}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-zinc-500 text-xs mb-1">Before</p>
+                <div className="h-20 rounded bg-gradient-to-br from-amber-900/60 to-stone-700/60 border border-zinc-600 flex items-center justify-center">
+                  <span className="text-2xl opacity-50">🟤</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-zinc-500 text-xs mb-1">After</p>
+                <div className={`h-20 rounded border flex items-center justify-center ${
+                  selectedPhoto.quality === 'excellent'
+                    ? 'bg-zinc-600 border-green-500'
+                    : 'bg-zinc-700 border-zinc-600'
+                }`}>
+                  <span className="text-2xl">{selectedPhoto.quality === 'excellent' ? '✨' : '✓'}</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm mt-2">
+              <span className={`${selectedPhoto.quality === 'excellent' ? 'text-green-400' : selectedPhoto.quality === 'good' ? 'text-yellow-400' : 'text-orange-400'}`}>
+                Quality: {selectedPhoto.quality}
+              </span>
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2">
+          {photos.map((photo) => (
+            <button
+              key={photo.ductId}
+              onClick={() => setSelectedPhoto(photo)}
+              className="aspect-square bg-zinc-800 rounded border border-zinc-700 hover:border-yellow-500 transition-all flex items-center justify-center"
+            >
+              <span className={photo.quality === 'excellent' ? 'text-green-400' : 'text-zinc-400'}>
+                {photo.quality === 'excellent' ? '✨' : '✓'}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p className="text-zinc-500 text-xs mt-2">{photos.length} ducts documented</p>
+    </div>
+  );
+}
+
 function CustomerWalkthrough({ state, dispatch, onComplete }) {
   const customer = CUSTOMER_TYPES[state.customerType];
   const dialogueTree = COMPLETION_DIALOGUES[state.customerType];
@@ -3516,6 +3907,13 @@ function CustomerWalkthrough({ state, dispatch, onComplete }) {
             <p className="text-zinc-500 text-sm">Reviewing completed work</p>
           </div>
         </div>
+
+        {/* Photo Gallery - show when photos documented */}
+        {hasPhotos && Object.keys(state.ductPhotos).length > 0 && (
+          <div className="mb-4">
+            <PhotoGallery state={state} />
+          </div>
+        )}
 
         {/* Dialogue bubble */}
         <div className="bg-zinc-900 rounded-lg p-4 border-l-4 border-yellow-500 mb-4">
@@ -3832,28 +4230,21 @@ function DayStartPhase({ state, dispatch }) {
 }
 
 function CompletionPhase({ state, dispatch }) {
-  const [photosTaken, setPhotosTaken] = useState(state.photosDocumented || false);
-  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [subPhase, setSubPhase] = useState('photos'); // 'photos', 'walkthrough', 'complete'
   const [walkthroughDone, setWalkthroughDone] = useState(false);
 
-  const handlePhotos = () => {
-    dispatch({ type: 'DOCUMENT_PHOTOS' });
-    dispatch({ type: 'ADD_BONUS', reason: 'Proper documentation', points: 5 });
-    setPhotosTaken(true);
+  const handlePhotosDone = () => {
+    setSubPhase('walkthrough');
   };
 
   const handleSkipPhotos = () => {
     dispatch({ type: 'ADD_PENALTY', reason: 'Skipped photo documentation', points: 5 });
-    setShowWalkthrough(true);
-  };
-
-  const handleStartWalkthrough = () => {
-    setShowWalkthrough(true);
+    setSubPhase('walkthrough');
   };
 
   const handleWalkthroughComplete = () => {
     setWalkthroughDone(true);
-    setShowWalkthrough(false);
+    setSubPhase('complete');
   };
 
   const handleComplete = () => {
@@ -3863,49 +4254,52 @@ function CompletionPhase({ state, dispatch }) {
     dispatch({ type: 'COMPLETE_JOB' });
   };
 
-  // Show walkthrough dialogue
-  if (showWalkthrough) {
+  // Photo documentation phase
+  if (subPhase === 'photos' && !state.photosDocumented) {
+    return (
+      <div className="space-y-4">
+        <PhotoDocumentation state={state} dispatch={dispatch} onComplete={handlePhotosDone} />
+        <button
+          onClick={handleSkipPhotos}
+          className="w-full py-2 text-sm text-zinc-500 hover:text-orange-400 transition-all"
+        >
+          Skip all photos and proceed to walkthrough (-5 points)
+        </button>
+      </div>
+    );
+  }
+
+  // Customer walkthrough phase
+  if (subPhase === 'walkthrough' && !walkthroughDone) {
     return <CustomerWalkthrough state={state} dispatch={dispatch} onComplete={handleWalkthroughComplete} />;
   }
 
+  // Final completion screen
   return (
     <div className="space-y-4">
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
         <h3 className="text-yellow-400 font-bold mb-4">✅ Job Completion Checklist</h3>
 
         <div className="space-y-3">
-          {!photosTaken ? (
-            <div className="space-y-2">
-              <button onClick={handlePhotos} className="w-full p-4 rounded-lg border-2 text-left transition-all bg-zinc-900 border-zinc-700 hover:border-yellow-500">
-                <p className="text-zinc-200 font-bold">📸 Take Before/After Photos</p>
-                <p className="text-zinc-500 text-sm">Document work completed for customer records</p>
-                <p className="text-green-400 text-xs mt-1">+5 points • Required for best walkthrough options</p>
-              </button>
-              <button onClick={handleSkipPhotos} className="w-full p-2 text-sm text-zinc-500 hover:text-orange-400 transition-all">
-                Skip photos and proceed to walkthrough (-5 points)
-              </button>
-            </div>
-          ) : (
-            <div className="p-4 rounded-lg border-2 bg-green-900/30 border-green-500">
-              <p className="text-green-400 font-bold">📸 Photos Documented</p>
-              <p className="text-zinc-400 text-sm">Before/after photos ready for customer</p>
-            </div>
-          )}
+          {/* Photos status */}
+          <div className={`p-4 rounded-lg border-2 ${state.photosDocumented ? 'bg-green-900/30 border-green-500' : 'bg-orange-900/30 border-orange-500'}`}>
+            <p className={state.photosDocumented ? 'text-green-400 font-bold' : 'text-orange-400 font-bold'}>
+              📸 {state.photosDocumented ? 'Photos Documented' : 'Photos Skipped'}
+            </p>
+            <p className="text-zinc-400 text-sm">
+              {state.photosDocumented
+                ? `${Object.keys(state.ductPhotos).length} before/after photos ready for customer`
+                : 'No documentation available'}
+            </p>
+          </div>
 
-          {photosTaken && !walkthroughDone && (
-            <button onClick={handleStartWalkthrough} className="w-full p-4 rounded-lg border-2 text-left transition-all bg-zinc-900 border-zinc-700 hover:border-yellow-500">
-              <p className="text-zinc-200 font-bold">🤝 Customer Walkthrough</p>
-              <p className="text-zinc-500 text-sm">Present work, explain findings, get signature</p>
-            </button>
-          )}
+          {/* Walkthrough status */}
+          <div className="p-4 rounded-lg border-2 bg-green-900/30 border-green-500">
+            <p className="text-green-400 font-bold">🤝 Walkthrough Complete</p>
+            <p className="text-zinc-400 text-sm">Customer signed off on work</p>
+          </div>
 
-          {walkthroughDone && (
-            <div className="p-4 rounded-lg border-2 bg-green-900/30 border-green-500">
-              <p className="text-green-400 font-bold">🤝 Walkthrough Complete</p>
-              <p className="text-zinc-400 text-sm">Customer signed off on work</p>
-            </div>
-          )}
-
+          {/* Screw inventory */}
           <div className="p-4 rounded-lg border-2 border-zinc-700 bg-zinc-900">
             <p className="text-zinc-200 font-bold">🔩 Screw Inventory</p>
             <div className="flex justify-between mt-2">
@@ -3923,7 +4317,7 @@ function CompletionPhase({ state, dispatch }) {
         </div>
       </div>
 
-      <button onClick={handleComplete} disabled={!walkthroughDone} className={`w-full py-3 font-bold rounded transition-all ${walkthroughDone ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'}`}>
+      <button onClick={handleComplete} className="w-full py-3 font-bold rounded transition-all bg-green-600 hover:bg-green-500 text-white">
         Complete Job & View Results →
       </button>
     </div>
