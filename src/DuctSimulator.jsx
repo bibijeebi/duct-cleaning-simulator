@@ -1011,6 +1011,903 @@ const SCENARIO_DUCTS = {
 };
 
 // ============================================================================
+// SITE MAP DATA - 2D Floor Plans for Navigation
+// ============================================================================
+
+const SITE_MAPS = {
+  residential: {
+    name: 'Ranch Home Floor Plan',
+    width: 400,
+    height: 300,
+    startArea: 'entry',
+    requiredAreas: ['air_handler', 'electrical_panel', 'return1', 'return2', 'supply_master', 'supply_bed2', 'supply_bed3', 'supply_living', 'supply_kitchen'],
+    areas: {
+      entry: {
+        id: 'entry',
+        name: 'Front Entry',
+        x: 200, y: 260,
+        width: 60, height: 40,
+        color: '#4b5563',
+        icon: '🚪',
+        info: null,
+        connections: ['living_room', 'hallway']
+      },
+      living_room: {
+        id: 'living_room',
+        name: 'Living Room',
+        x: 100, y: 180,
+        width: 120, height: 100,
+        color: '#374151',
+        icon: '🛋️',
+        info: null,
+        connections: ['entry', 'kitchen', 'hallway'],
+        registers: ['return1', 'supply_living']
+      },
+      return1: {
+        id: 'return1',
+        name: 'Return 1 (Living Room)',
+        x: 60, y: 200,
+        width: 30, height: 30,
+        color: '#3b82f6',
+        icon: '📥',
+        info: 'Large 20x25 return grille. Flex duct connection to air handler.',
+        isRegister: true,
+        connections: ['living_room']
+      },
+      supply_living: {
+        id: 'supply_living',
+        name: 'Supply (Living Room)',
+        x: 180, y: 200,
+        width: 30, height: 30,
+        color: '#22c55e',
+        icon: '📤',
+        info: '12ft flex duct run. Good airflow noted.',
+        isRegister: true,
+        connections: ['living_room']
+      },
+      kitchen: {
+        id: 'kitchen',
+        name: 'Kitchen',
+        x: 100, y: 60,
+        width: 100, height: 80,
+        color: '#374151',
+        icon: '🍳',
+        info: null,
+        connections: ['living_room', 'dining'],
+        registers: ['supply_kitchen']
+      },
+      supply_kitchen: {
+        id: 'supply_kitchen',
+        name: 'Supply (Kitchen)',
+        x: 130, y: 80,
+        width: 30, height: 30,
+        color: '#22c55e',
+        icon: '📤',
+        info: '16ft flex duct run. Located under cabinet toe kick.',
+        isRegister: true,
+        connections: ['kitchen']
+      },
+      dining: {
+        id: 'dining',
+        name: 'Dining Room',
+        x: 220, y: 60,
+        width: 80, height: 80,
+        color: '#374151',
+        icon: '🍽️',
+        info: null,
+        connections: ['kitchen', 'hallway'],
+        registers: ['supply_dining']
+      },
+      supply_dining: {
+        id: 'supply_dining',
+        name: 'Supply (Dining)',
+        x: 250, y: 100,
+        width: 30, height: 30,
+        color: '#22c55e',
+        icon: '📤',
+        info: '14ft flex duct run. Under china cabinet - will need to move.',
+        isRegister: true,
+        connections: ['dining']
+      },
+      hallway: {
+        id: 'hallway',
+        name: 'Hallway',
+        x: 250, y: 160,
+        width: 40, height: 100,
+        color: '#4b5563',
+        icon: '🚶',
+        info: null,
+        connections: ['entry', 'living_room', 'dining', 'master_bed', 'bed2', 'bed3', 'attic_access'],
+        registers: ['return2']
+      },
+      return2: {
+        id: 'return2',
+        name: 'Return 2 (Hallway)',
+        x: 295, y: 190,
+        width: 30, height: 30,
+        color: '#3b82f6',
+        icon: '📥',
+        info: '8ft rigid duct to main trunk. 14x20 filter grille.',
+        isRegister: true,
+        connections: ['hallway']
+      },
+      attic_access: {
+        id: 'attic_access',
+        name: 'Attic Access',
+        x: 250, y: 140,
+        width: 40, height: 20,
+        color: '#fbbf24',
+        icon: '🪜',
+        info: 'Pull-down stairs. Watch head clearance. Plywood walkway to air handler.',
+        connections: ['hallway', 'air_handler']
+      },
+      air_handler: {
+        id: 'air_handler',
+        name: 'Air Handler (Attic)',
+        x: 200, y: 20,
+        width: 60, height: 40,
+        color: '#ef4444',
+        icon: '❄️',
+        info: 'Goodman 3-ton split system. Filter at unit. Main trunk runs east-west.',
+        isAirHandler: true,
+        connections: ['attic_access']
+      },
+      master_bed: {
+        id: 'master_bed',
+        name: 'Master Bedroom',
+        x: 320, y: 60,
+        width: 80, height: 80,
+        color: '#374151',
+        icon: '🛏️',
+        info: null,
+        connections: ['hallway'],
+        registers: ['supply_master']
+      },
+      supply_master: {
+        id: 'supply_master',
+        name: 'Supply (Master)',
+        x: 350, y: 100,
+        width: 30, height: 30,
+        color: '#22c55e',
+        icon: '📤',
+        info: '20ft flex duct run - longest in house. Customer mentioned noise here.',
+        isRegister: true,
+        connections: ['master_bed']
+      },
+      bed2: {
+        id: 'bed2',
+        name: 'Bedroom 2',
+        x: 320, y: 160,
+        width: 60, height: 60,
+        color: '#374151',
+        icon: '🛏️',
+        info: null,
+        connections: ['hallway'],
+        registers: ['supply_bed2']
+      },
+      supply_bed2: {
+        id: 'supply_bed2',
+        name: 'Supply (Bed 2)',
+        x: 340, y: 180,
+        width: 30, height: 30,
+        color: '#22c55e',
+        icon: '📤',
+        info: '18ft flex duct run. Normal condition.',
+        isRegister: true,
+        connections: ['bed2']
+      },
+      bed3: {
+        id: 'bed3',
+        name: 'Bedroom 3',
+        x: 320, y: 230,
+        width: 60, height: 60,
+        color: '#374151',
+        icon: '🛏️',
+        info: null,
+        connections: ['hallway'],
+        registers: ['supply_bed3']
+      },
+      supply_bed3: {
+        id: 'supply_bed3',
+        name: 'Supply (Bed 3)',
+        x: 340, y: 250,
+        width: 30, height: 30,
+        color: '#22c55e',
+        icon: '📤',
+        info: '15ft flex duct run. Normal condition.',
+        isRegister: true,
+        connections: ['bed3']
+      },
+      garage: {
+        id: 'garage',
+        name: 'Garage',
+        x: 20, y: 180,
+        width: 60, height: 100,
+        color: '#1f2937',
+        icon: '🚗',
+        info: null,
+        connections: ['living_room', 'electrical_panel']
+      },
+      electrical_panel: {
+        id: 'electrical_panel',
+        name: 'Electrical Panel',
+        x: 20, y: 260,
+        width: 40, height: 30,
+        color: '#f59e0b',
+        icon: '⚡',
+        info: 'Main panel in garage. Found 20A circuit labeled "HVAC". Outlet nearby.',
+        isElectrical: true,
+        connections: ['garage']
+      }
+    }
+  },
+  commercial: {
+    name: 'Strip Mall - Dental Office',
+    width: 450,
+    height: 350,
+    startArea: 'rear_entrance',
+    requiredAreas: ['rtu_access', 'electrical_panel', 'reception_reg', 'exam1_reg', 'exam2_reg', 'exam3_reg', 'office_reg', 'lab_reg', 'breakroom_reg'],
+    areas: {
+      rear_entrance: {
+        id: 'rear_entrance',
+        name: 'Rear Entrance',
+        x: 400, y: 310,
+        width: 40, height: 40,
+        color: '#4b5563',
+        icon: '🚪',
+        info: 'Service entrance. Alarm panel inside - enter code.',
+        connections: ['back_hallway', 'exterior']
+      },
+      exterior: {
+        id: 'exterior',
+        name: 'Exterior/Parking',
+        x: 400, y: 260,
+        width: 50, height: 40,
+        color: '#1f2937',
+        icon: '🅿️',
+        info: 'Roof ladder access on east side of building.',
+        connections: ['rear_entrance', 'roof_access']
+      },
+      roof_access: {
+        id: 'roof_access',
+        name: 'Roof Ladder',
+        x: 420, y: 200,
+        width: 30, height: 50,
+        color: '#f59e0b',
+        icon: '🪜',
+        info: 'Fixed ladder to roof. Tie off point at top.',
+        connections: ['exterior', 'rtu_access']
+      },
+      rtu_access: {
+        id: 'rtu_access',
+        name: 'Rooftop Unit',
+        x: 200, y: 10,
+        width: 80, height: 50,
+        color: '#ef4444',
+        icon: '❄️',
+        info: 'Carrier 7.5-ton RTU. 100ft hose run needed. Port on supply plenum.',
+        isAirHandler: true,
+        connections: ['roof_access']
+      },
+      back_hallway: {
+        id: 'back_hallway',
+        name: 'Back Hallway',
+        x: 320, y: 180,
+        width: 40, height: 130,
+        color: '#4b5563',
+        icon: '🚶',
+        info: null,
+        connections: ['rear_entrance', 'breakroom', 'lab', 'exam3', 'main_hallway']
+      },
+      breakroom: {
+        id: 'breakroom',
+        name: 'Break Room',
+        x: 370, y: 180,
+        width: 60, height: 50,
+        color: '#374151',
+        icon: '☕',
+        info: null,
+        connections: ['back_hallway'],
+        registers: ['breakroom_reg']
+      },
+      breakroom_reg: {
+        id: 'breakroom_reg',
+        name: 'Supply (Break Room)',
+        x: 390, y: 200,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '18ft rigid run. Ceiling diffuser.',
+        isRegister: true,
+        connections: ['breakroom']
+      },
+      lab: {
+        id: 'lab',
+        name: 'Lab',
+        x: 370, y: 120,
+        width: 60, height: 50,
+        color: '#374151',
+        icon: '🔬',
+        info: null,
+        connections: ['back_hallway'],
+        registers: ['lab_reg']
+      },
+      lab_reg: {
+        id: 'lab_reg',
+        name: 'Supply (Lab)',
+        x: 390, y: 140,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '22ft rigid run. Keep equipment covered - sensitive instruments.',
+        isRegister: true,
+        connections: ['lab']
+      },
+      exam3: {
+        id: 'exam3',
+        name: 'Exam Room 3',
+        x: 240, y: 240,
+        width: 70, height: 60,
+        color: '#374151',
+        icon: '🦷',
+        info: null,
+        connections: ['back_hallway', 'main_hallway'],
+        registers: ['exam3_reg']
+      },
+      exam3_reg: {
+        id: 'exam3_reg',
+        name: 'Supply (Exam 3)',
+        x: 270, y: 260,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '28ft rigid run. Linear slot diffuser.',
+        isRegister: true,
+        connections: ['exam3']
+      },
+      main_hallway: {
+        id: 'main_hallway',
+        name: 'Main Hallway',
+        x: 180, y: 120,
+        width: 40, height: 180,
+        color: '#4b5563',
+        icon: '🚶',
+        info: 'Main duct trunk runs above ceiling here.',
+        connections: ['back_hallway', 'exam3', 'exam2', 'exam1', 'office', 'reception']
+      },
+      exam2: {
+        id: 'exam2',
+        name: 'Exam Room 2',
+        x: 240, y: 170,
+        width: 70, height: 60,
+        color: '#374151',
+        icon: '🦷',
+        info: null,
+        connections: ['main_hallway'],
+        registers: ['exam2_reg']
+      },
+      exam2_reg: {
+        id: 'exam2_reg',
+        name: 'Supply (Exam 2)',
+        x: 270, y: 190,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '30ft rigid run. Ceiling supply.',
+        isRegister: true,
+        connections: ['exam2']
+      },
+      exam1: {
+        id: 'exam1',
+        name: 'Exam Room 1',
+        x: 240, y: 100,
+        width: 70, height: 60,
+        color: '#374151',
+        icon: '🦷',
+        info: null,
+        connections: ['main_hallway'],
+        registers: ['exam1_reg']
+      },
+      exam1_reg: {
+        id: 'exam1_reg',
+        name: 'Supply (Exam 1)',
+        x: 270, y: 120,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '30ft rigid run. Same as Exam 2.',
+        isRegister: true,
+        connections: ['exam1']
+      },
+      office: {
+        id: 'office',
+        name: 'Office',
+        x: 100, y: 200,
+        width: 70, height: 60,
+        color: '#374151',
+        icon: '💼',
+        info: null,
+        connections: ['main_hallway'],
+        registers: ['office_reg']
+      },
+      office_reg: {
+        id: 'office_reg',
+        name: 'Supply (Office)',
+        x: 130, y: 220,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '20ft lined duct run. Diffuser at desk area.',
+        isRegister: true,
+        connections: ['office']
+      },
+      reception: {
+        id: 'reception',
+        name: 'Reception',
+        x: 40, y: 100,
+        width: 120, height: 80,
+        color: '#374151',
+        icon: '🪑',
+        info: null,
+        connections: ['main_hallway', 'front_entrance'],
+        registers: ['reception_reg', 'main_return']
+      },
+      reception_reg: {
+        id: 'reception_reg',
+        name: 'Supply (Reception)',
+        x: 80, y: 120,
+        width: 25, height: 25,
+        color: '#22c55e',
+        icon: '📤',
+        info: '25ft rigid run. Large 4-way diffuser for waiting area.',
+        isRegister: true,
+        connections: ['reception']
+      },
+      main_return: {
+        id: 'main_return',
+        name: 'Main Return',
+        x: 120, y: 150,
+        width: 30, height: 25,
+        color: '#3b82f6',
+        icon: '📥',
+        info: '24x24 return grille. 60ft return trunk to RTU.',
+        isRegister: true,
+        connections: ['reception']
+      },
+      front_entrance: {
+        id: 'front_entrance',
+        name: 'Front Entrance',
+        x: 40, y: 60,
+        width: 50, height: 30,
+        color: '#4b5563',
+        icon: '🚪',
+        info: 'Main customer entrance. Locked after hours.',
+        connections: ['reception']
+      },
+      electrical_panel: {
+        id: 'electrical_panel',
+        name: 'Electrical Panel',
+        x: 320, y: 120,
+        width: 35, height: 30,
+        color: '#f59e0b',
+        icon: '⚡',
+        info: '200A service. RTU on 60A breaker. Found 20A outlet in lab.',
+        isElectrical: true,
+        connections: ['back_hallway']
+      }
+    }
+  },
+  courthouse: {
+    name: 'Durham County Courthouse',
+    width: 450,
+    height: 380,
+    startArea: 'main_entrance',
+    floors: [1, 2, 3],
+    requiredAreas: {
+      1: ['floor1_mechanical', 'floor1_electrical', 'floor1_courta_reg', 'floor1_courtb_reg', 'floor1_clerk_reg1', 'floor1_clerk_reg2'],
+      2: ['floor2_mechanical', 'floor2_electrical', 'floor2_courtc_reg', 'floor2_chambers_reg1', 'floor2_chambers_reg2'],
+      3: ['floor3_mechanical', 'floor3_electrical', 'floor3_admin_reg1', 'floor3_admin_reg2', 'floor3_records_reg', 'floor3_ptac1', 'floor3_ptac2']
+    },
+    floorPlans: {
+      1: {
+        name: 'Floor 1 - Ground Level',
+        areas: {
+          main_entrance: {
+            id: 'main_entrance',
+            name: 'Main Entrance',
+            x: 200, y: 340,
+            width: 50, height: 30,
+            color: '#4b5563',
+            icon: '🚪',
+            info: 'Security checkpoint. Sign in required.',
+            connections: ['main_lobby']
+          },
+          main_lobby: {
+            id: 'main_lobby',
+            name: 'Main Lobby',
+            x: 150, y: 260,
+            width: 150, height: 70,
+            color: '#374151',
+            icon: '🏛️',
+            info: 'High traffic area. Work after hours only.',
+            connections: ['main_entrance', 'floor1_corridor', 'stairwell']
+          },
+          stairwell: {
+            id: 'stairwell',
+            name: 'Stairwell',
+            x: 380, y: 160,
+            width: 40, height: 100,
+            color: '#4b5563',
+            icon: '🪜',
+            info: 'Access to all floors. Equipment staging area.',
+            connections: ['main_lobby', 'floor1_corridor'],
+            isStairwell: true
+          },
+          floor1_corridor: {
+            id: 'floor1_corridor',
+            name: 'Main Corridor',
+            x: 150, y: 140,
+            width: 200, height: 40,
+            color: '#4b5563',
+            icon: '🚶',
+            info: '120ft main trunk above ceiling tiles.',
+            connections: ['main_lobby', 'stairwell', 'courtroom_a', 'courtroom_b', 'clerk_offices', 'floor1_mechanical']
+          },
+          courtroom_a: {
+            id: 'courtroom_a',
+            name: 'Courtroom A',
+            x: 40, y: 60,
+            width: 120, height: 100,
+            color: '#374151',
+            icon: '⚖️',
+            info: 'Active courtroom. Coordinate with bailiff.',
+            connections: ['floor1_corridor'],
+            registers: ['floor1_courta_reg']
+          },
+          floor1_courta_reg: {
+            id: 'floor1_courta_reg',
+            name: 'Supply (Courtroom A)',
+            x: 80, y: 100,
+            width: 30, height: 30,
+            color: '#22c55e',
+            icon: '📤',
+            info: '45ft lined duct. Large ceiling diffuser. Quiet operation required.',
+            isRegister: true,
+            connections: ['courtroom_a']
+          },
+          courtroom_b: {
+            id: 'courtroom_b',
+            name: 'Courtroom B',
+            x: 40, y: 180,
+            width: 90, height: 80,
+            color: '#374151',
+            icon: '⚖️',
+            info: 'Smaller courtroom. Usually hearings only.',
+            connections: ['floor1_corridor'],
+            registers: ['floor1_courtb_reg']
+          },
+          floor1_courtb_reg: {
+            id: 'floor1_courtb_reg',
+            name: 'Supply (Courtroom B)',
+            x: 70, y: 210,
+            width: 30, height: 30,
+            color: '#22c55e',
+            icon: '📤',
+            info: '45ft lined duct. Similar to Courtroom A.',
+            isRegister: true,
+            connections: ['courtroom_b']
+          },
+          clerk_offices: {
+            id: 'clerk_offices',
+            name: 'Clerk Offices',
+            x: 200, y: 60,
+            width: 140, height: 70,
+            color: '#374151',
+            icon: '📋',
+            info: 'Open office area. 4 workstations.',
+            connections: ['floor1_corridor'],
+            registers: ['floor1_clerk_reg1', 'floor1_clerk_reg2']
+          },
+          floor1_clerk_reg1: {
+            id: 'floor1_clerk_reg1',
+            name: 'Supply (Clerk 1)',
+            x: 230, y: 80,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '60ft rigid run. Linear diffuser.',
+            isRegister: true,
+            connections: ['clerk_offices']
+          },
+          floor1_clerk_reg2: {
+            id: 'floor1_clerk_reg2',
+            name: 'Supply (Clerk 2)',
+            x: 290, y: 80,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '55ft rigid run. Same trunk as Clerk 1.',
+            isRegister: true,
+            connections: ['clerk_offices']
+          },
+          floor1_mechanical: {
+            id: 'floor1_mechanical',
+            name: 'Mechanical Room',
+            x: 380, y: 60,
+            width: 50, height: 80,
+            color: '#ef4444',
+            icon: '🔧',
+            info: 'Floor 1 AHU location. Fan coil units here.',
+            isAirHandler: true,
+            connections: ['floor1_corridor', 'floor1_electrical']
+          },
+          floor1_electrical: {
+            id: 'floor1_electrical',
+            name: 'Electrical Room',
+            x: 380, y: 260,
+            width: 40, height: 50,
+            color: '#f59e0b',
+            icon: '⚡',
+            info: 'Floor 1 panel. 30A circuit available for equipment.',
+            isElectrical: true,
+            connections: ['stairwell']
+          }
+        }
+      },
+      2: {
+        name: 'Floor 2 - Courtrooms',
+        areas: {
+          stairwell: {
+            id: 'stairwell',
+            name: 'Stairwell',
+            x: 380, y: 160,
+            width: 40, height: 100,
+            color: '#4b5563',
+            icon: '🪜',
+            info: 'Floor 2 landing.',
+            connections: ['floor2_corridor'],
+            isStairwell: true
+          },
+          floor2_corridor: {
+            id: 'floor2_corridor',
+            name: 'Main Corridor',
+            x: 150, y: 160,
+            width: 200, height: 40,
+            color: '#4b5563',
+            icon: '🚶',
+            info: '120ft trunk. Historic plaster ceilings - use care.',
+            connections: ['stairwell', 'courtroom_c', 'judge_chambers', 'conference', 'floor2_mechanical']
+          },
+          courtroom_c: {
+            id: 'courtroom_c',
+            name: 'Courtroom C',
+            x: 40, y: 80,
+            width: 130, height: 120,
+            color: '#374151',
+            icon: '⚖️',
+            info: 'Largest courtroom. Judge Williams - strict about noise.',
+            connections: ['floor2_corridor'],
+            registers: ['floor2_courtc_reg']
+          },
+          floor2_courtc_reg: {
+            id: 'floor2_courtc_reg',
+            name: 'Supply (Courtroom C)',
+            x: 90, y: 130,
+            width: 30, height: 30,
+            color: '#22c55e',
+            icon: '📤',
+            info: '50ft lined duct. Ornate ceiling grille.',
+            isRegister: true,
+            connections: ['courtroom_c']
+          },
+          judge_chambers: {
+            id: 'judge_chambers',
+            name: 'Judge Chambers',
+            x: 200, y: 60,
+            width: 150, height: 90,
+            color: '#374151',
+            icon: '👨‍⚖️',
+            info: 'Private offices. Schedule varies. Historic woodwork.',
+            connections: ['floor2_corridor'],
+            registers: ['floor2_chambers_reg1', 'floor2_chambers_reg2']
+          },
+          floor2_chambers_reg1: {
+            id: 'floor2_chambers_reg1',
+            name: 'Supply (Chambers 1)',
+            x: 230, y: 90,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '80ft ductboard run. Handle with extreme care.',
+            isRegister: true,
+            connections: ['judge_chambers']
+          },
+          floor2_chambers_reg2: {
+            id: 'floor2_chambers_reg2',
+            name: 'Supply (Chambers 2)',
+            x: 300, y: 90,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '75ft ductboard. Same caution applies.',
+            isRegister: true,
+            connections: ['judge_chambers']
+          },
+          conference: {
+            id: 'conference',
+            name: 'Conference Rooms',
+            x: 40, y: 220,
+            width: 100, height: 70,
+            color: '#374151',
+            icon: '👥',
+            info: 'Attorney meeting rooms. Usually available.',
+            connections: ['floor2_corridor']
+          },
+          floor2_mechanical: {
+            id: 'floor2_mechanical',
+            name: 'Mechanical Closet',
+            x: 380, y: 60,
+            width: 50, height: 80,
+            color: '#ef4444',
+            icon: '🔧',
+            info: 'Floor 2 fan coils. Tight space.',
+            isAirHandler: true,
+            connections: ['floor2_corridor', 'floor2_electrical']
+          },
+          floor2_electrical: {
+            id: 'floor2_electrical',
+            name: 'Electrical Panel',
+            x: 380, y: 270,
+            width: 40, height: 40,
+            color: '#f59e0b',
+            icon: '⚡',
+            info: 'Sub-panel for Floor 2. 20A available.',
+            isElectrical: true,
+            connections: ['stairwell']
+          }
+        }
+      },
+      3: {
+        name: 'Floor 3 - Administration',
+        areas: {
+          stairwell: {
+            id: 'stairwell',
+            name: 'Stairwell',
+            x: 380, y: 160,
+            width: 40, height: 100,
+            color: '#4b5563',
+            icon: '🪜',
+            info: 'Top floor. Roof access hatch in ceiling.',
+            connections: ['floor3_corridor'],
+            isStairwell: true
+          },
+          floor3_corridor: {
+            id: 'floor3_corridor',
+            name: 'Main Corridor',
+            x: 150, y: 160,
+            width: 200, height: 40,
+            color: '#4b5563',
+            icon: '🚶',
+            info: '110ft main trunk. Less restrictive schedule.',
+            connections: ['stairwell', 'admin_offices', 'records_room', 'it_room', 'floor3_mechanical']
+          },
+          admin_offices: {
+            id: 'admin_offices',
+            name: 'Admin Offices',
+            x: 40, y: 80,
+            width: 160, height: 100,
+            color: '#374151',
+            icon: '📋',
+            info: 'County admin staff. Open floor plan.',
+            connections: ['floor3_corridor'],
+            registers: ['floor3_admin_reg1', 'floor3_admin_reg2', 'floor3_ptac1']
+          },
+          floor3_admin_reg1: {
+            id: 'floor3_admin_reg1',
+            name: 'Supply (Admin 1)',
+            x: 70, y: 110,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '90ft rigid duct. Long run but accessible.',
+            isRegister: true,
+            connections: ['admin_offices']
+          },
+          floor3_admin_reg2: {
+            id: 'floor3_admin_reg2',
+            name: 'Supply (Admin 2)',
+            x: 140, y: 110,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '85ft rigid duct. Same trunk.',
+            isRegister: true,
+            connections: ['admin_offices']
+          },
+          floor3_ptac1: {
+            id: 'floor3_ptac1',
+            name: 'PTAC Unit 1',
+            x: 60, y: 150,
+            width: 30, height: 20,
+            color: '#a855f7',
+            icon: '📦',
+            info: 'Wall-mounted PTAC. Filter and coil cleaning.',
+            isPTAC: true,
+            connections: ['admin_offices']
+          },
+          records_room: {
+            id: 'records_room',
+            name: 'Records Room',
+            x: 220, y: 60,
+            width: 100, height: 90,
+            color: '#374151',
+            icon: '📁',
+            info: 'Sensitive documents. Cover EVERYTHING with plastic.',
+            connections: ['floor3_corridor'],
+            registers: ['floor3_records_reg']
+          },
+          floor3_records_reg: {
+            id: 'floor3_records_reg',
+            name: 'Supply (Records)',
+            x: 260, y: 90,
+            width: 25, height: 25,
+            color: '#22c55e',
+            icon: '📤',
+            info: '40ft ductboard. Air wash only - no contact tools!',
+            isRegister: true,
+            connections: ['records_room']
+          },
+          it_room: {
+            id: 'it_room',
+            name: 'IT/Server Room',
+            x: 40, y: 220,
+            width: 100, height: 80,
+            color: '#374151',
+            icon: '🖥️',
+            info: 'Temperature critical. Coordinate with IT staff.',
+            connections: ['floor3_corridor'],
+            registers: ['floor3_ptac2']
+          },
+          floor3_ptac2: {
+            id: 'floor3_ptac2',
+            name: 'PTAC Unit 2',
+            x: 80, y: 260,
+            width: 30, height: 20,
+            color: '#a855f7',
+            icon: '📦',
+            info: 'Server room PTAC. Critical for cooling.',
+            isPTAC: true,
+            connections: ['it_room']
+          },
+          floor3_mechanical: {
+            id: 'floor3_mechanical',
+            name: 'Mechanical Room',
+            x: 380, y: 60,
+            width: 50, height: 80,
+            color: '#ef4444',
+            icon: '🔧',
+            info: 'Floor 3 AHU. Also houses 8 PTAC filter stock.',
+            isAirHandler: true,
+            connections: ['floor3_corridor', 'floor3_electrical']
+          },
+          floor3_electrical: {
+            id: 'floor3_electrical',
+            name: 'Electrical Panel',
+            x: 380, y: 270,
+            width: 40, height: 40,
+            color: '#f59e0b',
+            icon: '⚡',
+            info: 'Floor 3 panel. Multiple 20A circuits available.',
+            isElectrical: true,
+            connections: ['stairwell']
+          }
+        }
+      }
+    }
+  }
+};
+
+// ============================================================================
 // MULTI-DAY COURTHOUSE DATA
 // ============================================================================
 
@@ -1537,7 +2434,13 @@ const initialState = {
   dayStartEvent: null, // Random event at start of day
   dayCallback: null, // Callback from previous day
   dayPackedUp: false, // Equipment packed for day
-  dayCheckedOut: false // Security checkout complete
+  dayCheckedOut: false, // Security checkout complete
+  // Site map navigation state
+  siteMapCompleted: false,
+  currentLocation: null, // Current area id
+  visitedAreas: {}, // { areaId: true }
+  discoveredInfo: {}, // { areaId: info string }
+  currentFloor: 1 // For courthouse multi-floor navigation
 };
 
 function gameReducer(state, action) {
@@ -1642,6 +2545,50 @@ function gameReducer(state, action) {
       return { ...state, securityCleared: true };
     case 'ASSIGN_CREW':
       return { ...state, crewAssigned: true };
+    // Site map navigation actions
+    case 'INIT_SITE_MAP': {
+      const siteMap = SITE_MAPS[state.scenario];
+      const startArea = state.scenario === 'courthouse'
+        ? siteMap.floorPlans[1].areas[siteMap.startArea]?.id || 'main_entrance'
+        : siteMap.startArea;
+      return {
+        ...state,
+        currentLocation: startArea,
+        visitedAreas: { [startArea]: true },
+        currentFloor: 1
+      };
+    }
+    case 'MOVE_TO_AREA': {
+      const newVisited = { ...state.visitedAreas, [action.areaId]: true };
+      const siteMap = SITE_MAPS[state.scenario];
+      let areaInfo = null;
+
+      if (state.scenario === 'courthouse') {
+        const floorPlan = siteMap.floorPlans[state.currentFloor];
+        areaInfo = floorPlan?.areas[action.areaId]?.info;
+      } else {
+        areaInfo = siteMap.areas[action.areaId]?.info;
+      }
+
+      const newDiscovered = areaInfo
+        ? { ...state.discoveredInfo, [action.areaId]: areaInfo }
+        : state.discoveredInfo;
+
+      return {
+        ...state,
+        currentLocation: action.areaId,
+        visitedAreas: newVisited,
+        discoveredInfo: newDiscovered
+      };
+    }
+    case 'CHANGE_FLOOR':
+      return {
+        ...state,
+        currentFloor: action.floor,
+        currentLocation: 'stairwell'
+      };
+    case 'COMPLETE_SITE_MAP':
+      return { ...state, siteMapCompleted: true };
     // Multi-day courthouse actions
     case 'START_DAY_END': {
       // Save current day's progress before transitioning
@@ -2566,6 +3513,439 @@ function FirstContact({ state, dispatch }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================================
+// SITE MAP NAVIGATION COMPONENT
+// ============================================================================
+
+function SiteMapNavigation({ state, dispatch, onComplete }) {
+  const [selectedInfo, setSelectedInfo] = useState(null);
+  const siteMap = SITE_MAPS[state.scenario];
+
+  useEffect(() => {
+    if (!state.currentLocation) {
+      dispatch({ type: 'INIT_SITE_MAP' });
+    }
+  }, []);
+
+  // Get the current floor's areas for courthouse, or regular areas for others
+  const getCurrentAreas = () => {
+    if (state.scenario === 'courthouse') {
+      return siteMap.floorPlans[state.currentFloor]?.areas || {};
+    }
+    return siteMap.areas;
+  };
+
+  const areas = getCurrentAreas();
+  const currentArea = areas[state.currentLocation];
+
+  // Get required areas based on scenario
+  const getRequiredAreas = () => {
+    if (state.scenario === 'courthouse') {
+      return siteMap.requiredAreas[state.currentFloor] || [];
+    }
+    return siteMap.requiredAreas;
+  };
+
+  const requiredAreas = getRequiredAreas();
+
+  // Check if an area is accessible from current location
+  const isAccessible = (areaId) => {
+    if (!currentArea) return areaId === siteMap.startArea;
+    return currentArea.connections?.includes(areaId);
+  };
+
+  // Check if all required areas have been visited
+  const allRequiredVisited = () => {
+    if (state.scenario === 'courthouse') {
+      // For courthouse, check all floors
+      for (let floor = 1; floor <= 3; floor++) {
+        const floorRequired = siteMap.requiredAreas[floor] || [];
+        for (const areaId of floorRequired) {
+          if (!state.visitedAreas[areaId]) return false;
+        }
+      }
+      return true;
+    }
+    return requiredAreas.every(areaId => state.visitedAreas[areaId]);
+  };
+
+  // Count visited required areas
+  const getProgress = () => {
+    if (state.scenario === 'courthouse') {
+      let total = 0;
+      let visited = 0;
+      for (let floor = 1; floor <= 3; floor++) {
+        const floorRequired = siteMap.requiredAreas[floor] || [];
+        total += floorRequired.length;
+        visited += floorRequired.filter(id => state.visitedAreas[id]).length;
+      }
+      return { visited, total };
+    }
+    const visited = requiredAreas.filter(id => state.visitedAreas[id]).length;
+    return { visited, total: requiredAreas.length };
+  };
+
+  const progress = getProgress();
+
+  const handleAreaClick = (areaId) => {
+    if (!isAccessible(areaId) && areaId !== state.currentLocation) return;
+
+    const area = areas[areaId];
+    if (areaId !== state.currentLocation) {
+      dispatch({ type: 'MOVE_TO_AREA', areaId });
+    }
+
+    if (area?.info) {
+      setSelectedInfo({ name: area.name, info: area.info, icon: area.icon });
+    }
+  };
+
+  const handleFloorChange = (floor) => {
+    dispatch({ type: 'CHANGE_FLOOR', floor });
+    setSelectedInfo(null);
+  };
+
+  const handleComplete = () => {
+    // Calculate penalties for missed areas
+    let missedCount = 0;
+    const missedTypes = { airHandler: false, electrical: false, registers: 0 };
+
+    if (state.scenario === 'courthouse') {
+      for (let floor = 1; floor <= 3; floor++) {
+        const floorRequired = siteMap.requiredAreas[floor] || [];
+        const floorAreas = siteMap.floorPlans[floor]?.areas || {};
+        for (const areaId of floorRequired) {
+          if (!state.visitedAreas[areaId]) {
+            missedCount++;
+            const area = floorAreas[areaId];
+            if (area?.isAirHandler) missedTypes.airHandler = true;
+            if (area?.isElectrical) missedTypes.electrical = true;
+            if (area?.isRegister || area?.isPTAC) missedTypes.registers++;
+          }
+        }
+      }
+    } else {
+      for (const areaId of requiredAreas) {
+        if (!state.visitedAreas[areaId]) {
+          missedCount++;
+          const area = areas[areaId];
+          if (area?.isAirHandler) missedTypes.airHandler = true;
+          if (area?.isElectrical) missedTypes.electrical = true;
+          if (area?.isRegister) missedTypes.registers++;
+        }
+      }
+    }
+
+    // Apply penalties
+    if (missedTypes.airHandler) {
+      dispatch({ type: 'ADD_PENALTY', reason: "Didn't locate air handler before starting", points: 15 });
+    }
+    if (missedTypes.electrical) {
+      dispatch({ type: 'ADD_PENALTY', reason: "Didn't locate electrical panel", points: 10 });
+    }
+    if (missedTypes.registers > 0) {
+      dispatch({ type: 'ADD_PENALTY', reason: `Missed ${missedTypes.registers} register location(s)`, points: missedTypes.registers * 3 });
+    }
+
+    // Bonus for thorough survey
+    if (missedCount === 0) {
+      dispatch({ type: 'ADD_BONUS', reason: 'Thorough site survey - all areas checked', points: 5 });
+    }
+
+    dispatch({ type: 'COMPLETE_SITE_MAP' });
+    onComplete();
+  };
+
+  // Render an area as an SVG rect
+  const renderArea = (area) => {
+    const isCurrentLocation = state.currentLocation === area.id;
+    const isVisited = state.visitedAreas[area.id];
+    const accessible = isAccessible(area.id);
+    const isRequired = requiredAreas.includes(area.id);
+
+    let strokeColor = '#3f3f46'; // zinc-700
+    let strokeWidth = 1;
+    let fillOpacity = 0.5;
+    let cursor = 'default';
+
+    if (isCurrentLocation) {
+      strokeColor = '#facc15'; // yellow-400
+      strokeWidth = 3;
+      fillOpacity = 0.8;
+    } else if (accessible) {
+      strokeColor = '#6366f1'; // indigo-500
+      strokeWidth = 2;
+      cursor = 'pointer';
+    }
+
+    if (isVisited && !isCurrentLocation) {
+      fillOpacity = 0.3;
+    }
+
+    return (
+      <g key={area.id} onClick={() => handleAreaClick(area.id)} style={{ cursor }}>
+        <rect
+          x={area.x}
+          y={area.y}
+          width={area.width}
+          height={area.height}
+          fill={area.color}
+          fillOpacity={fillOpacity}
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          rx={4}
+        />
+        {/* Icon */}
+        <text
+          x={area.x + area.width / 2}
+          y={area.y + area.height / 2 - 4}
+          textAnchor="middle"
+          fontSize={area.width < 40 ? 12 : 16}
+          dominantBaseline="middle"
+        >
+          {area.icon}
+        </text>
+        {/* Name - only for larger areas */}
+        {area.width >= 50 && area.height >= 40 && (
+          <text
+            x={area.x + area.width / 2}
+            y={area.y + area.height / 2 + 12}
+            textAnchor="middle"
+            fontSize={9}
+            fill="#a1a1aa"
+            dominantBaseline="middle"
+          >
+            {area.name.length > 15 ? area.name.substring(0, 12) + '...' : area.name}
+          </text>
+        )}
+        {/* Required indicator */}
+        {isRequired && !isVisited && (
+          <circle
+            cx={area.x + area.width - 6}
+            cy={area.y + 6}
+            r={5}
+            fill="#ef4444"
+          />
+        )}
+        {/* Visited checkmark */}
+        {isVisited && isRequired && (
+          <circle
+            cx={area.x + area.width - 6}
+            cy={area.y + 6}
+            r={5}
+            fill="#22c55e"
+          />
+        )}
+      </g>
+    );
+  };
+
+  // Render connection lines between areas
+  const renderConnections = () => {
+    const lines = [];
+    const drawnConnections = new Set();
+
+    Object.values(areas).forEach(area => {
+      if (!area.connections) return;
+      area.connections.forEach(connId => {
+        const connArea = areas[connId];
+        if (!connArea) return;
+
+        const connKey = [area.id, connId].sort().join('-');
+        if (drawnConnections.has(connKey)) return;
+        drawnConnections.add(connKey);
+
+        const x1 = area.x + area.width / 2;
+        const y1 = area.y + area.height / 2;
+        const x2 = connArea.x + connArea.width / 2;
+        const y2 = connArea.y + connArea.height / 2;
+
+        lines.push(
+          <line
+            key={connKey}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="#27272a"
+            strokeWidth={2}
+            strokeDasharray="4,4"
+          />
+        );
+      });
+    });
+
+    return lines;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-yellow-400 font-bold">
+            🗺️ Site Survey - {state.scenario === 'courthouse'
+              ? siteMap.floorPlans[state.currentFloor].name
+              : siteMap.name}
+          </h3>
+          <div className="text-sm text-zinc-400">
+            Progress: <span className={progress.visited === progress.total ? 'text-green-400' : 'text-yellow-400'}>
+              {progress.visited}/{progress.total}
+            </span> areas
+          </div>
+        </div>
+
+        {/* Floor selector for courthouse */}
+        {state.scenario === 'courthouse' && (
+          <div className="flex gap-2 mb-4">
+            {siteMap.floors.map(floor => {
+              const floorRequired = siteMap.requiredAreas[floor] || [];
+              const floorVisited = floorRequired.filter(id => state.visitedAreas[id]).length;
+              const isComplete = floorVisited === floorRequired.length;
+
+              return (
+                <button
+                  key={floor}
+                  onClick={() => handleFloorChange(floor)}
+                  disabled={floor !== state.currentFloor && state.currentLocation !== 'stairwell'}
+                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-all ${
+                    floor === state.currentFloor
+                      ? 'bg-yellow-500 text-zinc-900'
+                      : state.currentLocation === 'stairwell'
+                        ? 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
+                        : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                  }`}
+                >
+                  Floor {floor}
+                  {isComplete && <span className="ml-1 text-green-600">✓</span>}
+                  {!isComplete && <span className="ml-1 text-xs">({floorVisited}/{floorRequired.length})</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* SVG Floor Plan */}
+        <div className="bg-zinc-900 rounded-lg p-2 overflow-auto">
+          <svg
+            width={siteMap.width}
+            height={siteMap.height}
+            viewBox={`0 0 ${siteMap.width} ${siteMap.height}`}
+            className="mx-auto"
+          >
+            {/* Connection lines (render first, behind areas) */}
+            {renderConnections()}
+
+            {/* Areas */}
+            {Object.values(areas).map(renderArea)}
+
+            {/* Current location indicator pulse */}
+            {currentArea && (
+              <circle
+                cx={currentArea.x + currentArea.width / 2}
+                cy={currentArea.y + currentArea.height / 2}
+                r={Math.min(currentArea.width, currentArea.height) / 2 + 5}
+                fill="none"
+                stroke="#facc15"
+                strokeWidth={2}
+                opacity={0.5}
+              >
+                <animate
+                  attributeName="r"
+                  from={Math.min(currentArea.width, currentArea.height) / 2}
+                  to={Math.min(currentArea.width, currentArea.height) / 2 + 15}
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  from="0.6"
+                  to="0"
+                  dur="1.5s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            )}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 mt-3 text-xs text-zinc-400">
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded bg-yellow-500/50 border-2 border-yellow-400"></span>
+            Current
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded bg-indigo-500/30 border-2 border-indigo-500"></span>
+            Accessible
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+            Required
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+            Visited
+          </span>
+        </div>
+
+        {/* Current location info */}
+        {currentArea && (
+          <div className="mt-4 p-3 bg-zinc-900 rounded">
+            <div className="flex items-center gap-2 text-zinc-200">
+              <span className="text-xl">{currentArea.icon}</span>
+              <span className="font-bold">{currentArea.name}</span>
+              {currentArea.isAirHandler && <span className="text-xs bg-red-900/50 text-red-400 px-2 py-0.5 rounded">Air Handler</span>}
+              {currentArea.isElectrical && <span className="text-xs bg-amber-900/50 text-amber-400 px-2 py-0.5 rounded">Electrical</span>}
+              {currentArea.isRegister && <span className="text-xs bg-green-900/50 text-green-400 px-2 py-0.5 rounded">Register</span>}
+              {currentArea.isPTAC && <span className="text-xs bg-purple-900/50 text-purple-400 px-2 py-0.5 rounded">PTAC</span>}
+            </div>
+            {state.discoveredInfo[currentArea.id] && (
+              <p className="text-sm text-zinc-400 mt-2 pl-7">
+                📋 {state.discoveredInfo[currentArea.id]}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Discovery log */}
+        {Object.keys(state.discoveredInfo).length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs text-zinc-500 mb-2">Survey Notes ({Object.keys(state.discoveredInfo).length} discoveries):</p>
+            <div className="max-h-32 overflow-y-auto space-y-1">
+              {Object.entries(state.discoveredInfo).slice(-5).map(([areaId, info]) => {
+                const area = areas[areaId] ||
+                  (state.scenario === 'courthouse'
+                    ? Object.values(siteMap.floorPlans).flatMap(f => Object.values(f.areas)).find(a => a.id === areaId)
+                    : null);
+                return (
+                  <div key={areaId} className="text-xs bg-zinc-900/50 p-2 rounded flex gap-2">
+                    <span>{area?.icon || '📍'}</span>
+                    <span className="text-zinc-400">{info}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Continue button */}
+      <button
+        onClick={handleComplete}
+        className={`w-full py-3 font-bold rounded transition-all ${
+          allRequiredVisited()
+            ? 'bg-green-600 hover:bg-green-500 text-white'
+            : 'bg-yellow-500 hover:bg-yellow-400 text-zinc-900'
+        }`}
+      >
+        {allRequiredVisited()
+          ? '✓ Survey Complete - Continue →'
+          : `Continue with Survey (${progress.total - progress.visited} areas remaining)`}
+      </button>
     </div>
   );
 }
@@ -4533,7 +5913,14 @@ export default function DuctCleaningSimulator() {
             <PhaseHeader phase={state.phase} scenario={state.scenario} currentDay={state.currentDay} totalDays={state.totalDays} />
             <h2 className="text-xl font-bold text-zinc-200 mb-4">Phase 2: Arrival & Assessment</h2>
             {state.subPhase === 0 && <FirstContact state={state} dispatch={dispatch} />}
-            {state.subPhase === 1 && <SiteSurvey state={state} dispatch={dispatch} />}
+            {state.subPhase === 1 && !state.siteMapCompleted && (
+              <SiteMapNavigation
+                state={state}
+                dispatch={dispatch}
+                onComplete={() => dispatch({ type: 'COMPLETE_SITE_MAP' })}
+              />
+            )}
+            {state.subPhase === 1 && state.siteMapCompleted && <SiteSurvey state={state} dispatch={dispatch} />}
             {state.subPhase === 2 && <HazardCheck state={state} dispatch={dispatch} />}
           </div>
         );
