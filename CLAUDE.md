@@ -67,7 +67,7 @@ npm run build    # Production build
 npm run test     # Run tests
 ```
 
-## Current State (v1.1)
+## Current State (v1.3)
 
 Implemented:
 - ✓ All 3 scenarios playable
@@ -80,12 +80,21 @@ Implemented:
 - ✓ Hazard detection (mold, asbestos, dead animal)
 - ✓ Problem scenarios (painted screws, breaker trips, etc.)
 - ✓ Scoring system
+- ✓ Customer dialogue trees (branching conversations with scoring)
+- ✓ Vacuum gauge diagnostics training
+- ✓ Multi-day courthouse progression (3 days, 3 floors)
+
+### Multi-Day Courthouse Features
+- Day 1: Floor 1 (Ground Level - Courtrooms A & B, Clerk offices)
+- Day 2: Floor 2 (Courtroom C, Judge chambers)
+- Day 3: Floor 3 (Admin offices, Records room, PTAC units)
+- End of day: Pack up equipment, security checkout, day summary
+- Start of day: Security check-in, equipment setup, callbacks from previous days
+- Random events reference previous days ("Security remembers you...")
+- Progress persists across days (cleaned ducts stay clean)
 
 Not yet implemented:
-- Customer dialogue trees (personalities defined, no branching convos)
 - 2D site map navigation (currently menu-driven)
-- Multi-day courthouse progression
-- Vacuum gauge diagnostics training
 - Before/after photo comparison UI
 
 ## Testing Notes
