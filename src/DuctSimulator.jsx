@@ -435,6 +435,534 @@ const DIALOGUE_TREES = {
   }
 };
 
+// ============================================================================
+// COMPLETION DIALOGUES - Customer walkthrough at end of job
+// ============================================================================
+
+const COMPLETION_DIALOGUES = {
+  helpful: {
+    start: 'show_work',
+    nodes: {
+      show_work: {
+        speaker: 'customer',
+        text: "All done? Great! Let's see what you found in there.",
+        choices: [
+          { text: "Here are the before and after photos - you can see the buildup we removed from each vent.", next: 'impressed', score: 5, reason: 'Professional documentation', requiresPhotos: true },
+          { text: "Everything's cleaned out. The airflow should be much better now.", next: 'satisfied', score: 2, reason: 'Basic explanation' },
+          { text: "Yep, all done. Just need your signature.", next: 'rushed', score: -3, reason: 'Rushed walkthrough' }
+        ]
+      },
+      impressed: {
+        speaker: 'customer',
+        text: "Wow, that's a lot of dust! I had no idea it was that bad. Thank you for showing me - I'll definitely share these photos with my husband.",
+        choices: [
+          { text: "Happy to help! I'd recommend cleaning again in 3-5 years, or sooner if you notice dust buildup on the vents.", next: 'signature', score: 3, reason: 'Helpful maintenance advice' },
+          { text: "No problem! Here's the invoice whenever you're ready.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      satisfied: {
+        speaker: 'customer',
+        text: "That's good to hear. The house did seem a bit dusty lately. Should I change my filter more often?",
+        choices: [
+          { text: "Monthly filter changes help a lot. I noticed yours was pretty loaded - that's normal after this much buildup.", next: 'signature', score: 2, reason: 'Practical advice' },
+          { text: "Filters help, yeah. Ready to sign?", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      rushed: {
+        speaker: 'customer',
+        text: "Oh... okay. I was hoping to see what you did. Did you take any pictures?",
+        choices: [
+          { text: "I apologize - let me show you the vents and explain what we cleaned.", next: 'recovery', score: 2, reason: 'Recovered with walkthrough' },
+          { text: "We cleaned everything, I promise. It's all good.", next: 'disappointed', score: -5, reason: 'No documentation shown' }
+        ]
+      },
+      recovery: {
+        speaker: 'customer',
+        text: "That's better, thank you. I just like to know what I'm paying for, you know?",
+        choices: [
+          { text: "Completely understand. Here's the invoice - everything's itemized.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      disappointed: {
+        speaker: 'customer',
+        text: "*sighs* Alright, I guess. Where do I sign?",
+        choices: [
+          { text: "[Get signature]", next: null, score: 0, reason: null }
+        ]
+      },
+      signature: {
+        speaker: 'customer',
+        text: "This all looks great. Let me get my checkbook. Thanks again!",
+        choices: [
+          { text: "Thank you! Call us anytime if you have questions about your system.", next: null, score: 2, reason: 'Professional closing' },
+          { text: "Thanks, have a great day!", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  suspicious: {
+    start: 'skeptical_review',
+    nodes: {
+      skeptical_review: {
+        speaker: 'customer',
+        text: "Okay, let's see it. I want to check every vent myself. And I want to see those before and after photos you promised.",
+        choices: [
+          { text: "Absolutely. Let's walk through each one - here are all the photos side by side.", next: 'checking_photos', score: 5, reason: 'Delivered on promise', requiresPhotos: true },
+          { text: "Here are the photos. As you can see, there was significant buildup in the returns.", next: 'partial_check', score: 2, reason: 'Showed documentation', requiresPhotos: true },
+          { text: "I cleaned everything thoroughly. You can trust the work.", next: 'no_photos', score: -5, reason: 'No proof provided' }
+        ]
+      },
+      checking_photos: {
+        speaker: 'customer',
+        text: "*examines photos carefully* ...Okay, I can see the difference. That master bedroom vent really was clogged. What's this dark stuff?",
+        choices: [
+          { text: "That's a combination of dust, dead skin cells, pet dander, and some mold spores - all normal for a system this age. It's all cleared out now.", next: 'convinced', score: 5, reason: 'Knowledgeable explanation' },
+          { text: "Just dust and debris that accumulated over time.", next: 'mostly_satisfied', score: 0, reason: null }
+        ]
+      },
+      partial_check: {
+        speaker: 'customer',
+        text: "Hmm. These look okay. But how do I know you actually cleaned inside the ducts and not just the vents?",
+        choices: [
+          { text: "Great question. See this photo? That's 15 feet into your main trunk line - you can see the before and after of the interior walls.", next: 'convinced', score: 3, reason: 'Addressed concern directly' },
+          { text: "We use a truck-mounted vacuum that pulls debris through the entire system. The vents are just the access points.", next: 'mostly_satisfied', score: 0, reason: null }
+        ]
+      },
+      no_photos: {
+        speaker: 'customer',
+        text: "Trust you? You said you'd take photos! This is exactly what I was worried about. How do I know you did anything?",
+        choices: [
+          { text: "You're right, I should have documented better. Let me show you the vents directly - you can feel the difference in airflow.", next: 'damage_control', score: 0, reason: 'Attempted recovery' },
+          { text: "Ma'am, I spent 4 hours cleaning your system. The work is done.", next: 'angry', score: -10, reason: 'Defensive without proof' }
+        ]
+      },
+      convinced: {
+        speaker: 'customer',
+        text: "...Alright. I'm actually impressed. You clearly know what you're doing. Sorry I was so... intense about this.",
+        choices: [
+          { text: "No apology needed - I'd want the same documentation if someone was working in my home. It's smart to ask questions.", next: 'signature_good', score: 3, reason: 'Gracious response' },
+          { text: "No problem. Ready to sign?", next: 'signature_neutral', score: 0, reason: null }
+        ]
+      },
+      mostly_satisfied: {
+        speaker: 'customer',
+        text: "Okay. I guess it looks fine. I'll be watching to see if there's actually less dust over the next few weeks.",
+        choices: [
+          { text: "You should notice a difference within a week. If you have any concerns, call us - we stand behind our work.", next: 'signature_neutral', score: 2, reason: 'Confidence in work' },
+          { text: "Here's the invoice.", next: 'signature_neutral', score: 0, reason: null }
+        ]
+      },
+      damage_control: {
+        speaker: 'customer',
+        text: "*feels vent* ...The airflow does seem stronger. Fine. But I'm writing a note about the missing photos on this invoice.",
+        choices: [
+          { text: "That's fair. I apologize for not meeting expectations on documentation.", next: 'signature_cold', score: 0, reason: null }
+        ]
+      },
+      angry: {
+        speaker: 'customer',
+        text: "I'm calling your office. This is unacceptable. Where's your supervisor's number?",
+        choices: [
+          { text: "[Provide supervisor contact and apologize]", next: null, score: -5, reason: 'Customer escalated to management' }
+        ]
+      },
+      signature_good: {
+        speaker: 'customer',
+        text: "I might actually recommend you guys to my neighbor. She's been complaining about her allergies. Let me sign this.",
+        choices: [
+          { text: "That would be great! Here's a few business cards if she's interested.", next: null, score: 2, reason: 'Earned referral' }
+        ]
+      },
+      signature_neutral: {
+        speaker: 'customer',
+        text: "Alright, let me sign. *signs invoice*",
+        choices: [
+          { text: "Thank you. Call us if you have any questions.", next: null, score: 0, reason: null }
+        ]
+      },
+      signature_cold: {
+        speaker: 'customer',
+        text: "*signs invoice silently*",
+        choices: [
+          { text: "[Leave quietly]", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  micromanager: {
+    start: 'detailed_review',
+    nodes: {
+      detailed_review: {
+        speaker: 'customer',
+        text: "Before you go, I need to see everything. Every vent. Every photo. I want a full breakdown of what was in each duct.",
+        choices: [
+          { text: "I was hoping you'd ask! I documented each vent with before/after shots. Let me walk you through all nine.", next: 'vent_by_vent', score: 5, reason: 'Prepared for scrutiny', requiresPhotos: true },
+          { text: "I have photos of the main areas. Let me show you the highlights.", next: 'highlights_only', score: 0, reason: null, requiresPhotos: true },
+          { text: "I cleaned everything. The system is in great shape now.", next: 'no_detail', score: -5, reason: 'Insufficient detail for customer type' }
+        ]
+      },
+      vent_by_vent: {
+        speaker: 'customer',
+        text: "*looks at each photo intently* What about this vent in bedroom 3? The after photo looks... is that still dirty?",
+        choices: [
+          { text: "Good eye - that's actually a shadow from the flash. But let me show you the actual vent... see? Completely clean.", next: 'thorough_check', score: 5, reason: 'Patient with detailed questions' },
+          { text: "No, that's clean. It's just the lighting in the photo.", next: 'somewhat_satisfied', score: 0, reason: null }
+        ]
+      },
+      highlights_only: {
+        speaker: 'customer',
+        text: "Just the highlights? I want to see ALL of them. You said you'd document everything.",
+        choices: [
+          { text: "You're right - let me pull up the full set. I have photos of each vent and the main trunk line.", next: 'vent_by_vent', score: 2, reason: 'Provided complete documentation' },
+          { text: "These are the important ones. The others looked similar.", next: 'disappointed', score: -3, reason: 'Incomplete documentation' }
+        ]
+      },
+      no_detail: {
+        speaker: 'customer',
+        text: "That's not what I asked. Did you even take photos? I specifically requested documentation of every vent.",
+        choices: [
+          { text: "I apologize - let me walk you through each vent physically and show you the condition.", next: 'physical_walkthrough', score: 0, reason: 'Recovered with walkthrough' },
+          { text: "The work is done correctly. You'll see the difference in air quality.", next: 'very_disappointed', score: -8, reason: 'Dismissed customer requirements' }
+        ]
+      },
+      thorough_check: {
+        speaker: 'customer',
+        text: "Okay... *checks a few more vents physically* ...Actually, this is really good work. I can tell you were thorough. The airflow is noticeably stronger.",
+        choices: [
+          { text: "Thanks for checking! I noticed the master bedroom had the most buildup - that's probably why you were getting the noise complaint.", next: 'impressed', score: 3, reason: 'Connected work to customer concern' },
+          { text: "Glad you're satisfied. Ready for the invoice?", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      somewhat_satisfied: {
+        speaker: 'customer',
+        text: "Hmm. I'll take your word for it. What about the main trunk? That's where all the dust collects, right?",
+        choices: [
+          { text: "Exactly right. Here's the trunk line before and after - you can see we removed about 2 inches of buildup along the bottom.", next: 'impressed', score: 3, reason: 'Educated customer' },
+          { text: "The trunk is clean too. All part of our standard service.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      disappointed: {
+        speaker: 'customer',
+        text: "I'm not happy about this. I expected full documentation. I'm noting this on the invoice.",
+        choices: [
+          { text: "I understand. I should have been more thorough with the photos. The cleaning itself was complete, but I'll do better on documentation next time.", next: 'grudging_signature', score: 0, reason: null }
+        ]
+      },
+      physical_walkthrough: {
+        speaker: 'customer',
+        text: "*walks to each vent and inspects* ...Okay, these do look clean. But I really wanted photos for my records.",
+        choices: [
+          { text: "I understand. Would you like to take photos now with your phone? I can show you each vent's condition.", next: 'grudging_signature', score: 2, reason: 'Offered solution' }
+        ]
+      },
+      very_disappointed: {
+        speaker: 'customer',
+        text: "This is exactly what I was afraid of. I'm leaving a review about this. Where's the invoice?",
+        choices: [
+          { text: "[Provide invoice quietly]", next: null, score: -3, reason: 'Lost customer trust' }
+        ]
+      },
+      impressed: {
+        speaker: 'customer',
+        text: "You know what? I was prepared to be critical, but you've actually exceeded my expectations. Most companies don't explain what they're doing.",
+        choices: [
+          { text: "I appreciate that! Understanding the system helps you maintain it. Here's my card if you ever have questions.", next: null, score: 5, reason: 'Converted skeptic to advocate' }
+        ]
+      },
+      signature: {
+        speaker: 'customer',
+        text: "Alright, everything checks out. Let me sign this.",
+        choices: [
+          { text: "Thank you! Feel free to call if you notice any issues.", next: null, score: 0, reason: null }
+        ]
+      },
+      grudging_signature: {
+        speaker: 'customer',
+        text: "*signs with a frown* I'll be checking on this over the next month.",
+        choices: [
+          { text: "Please do - and call us if you have any concerns.", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  professional: {
+    start: 'business_review',
+    nodes: {
+      business_review: {
+        speaker: 'customer',
+        text: "Finished? I need documentation for our files - photos, invoice, and any notes about the system condition.",
+        choices: [
+          { text: "All prepared. Here's the complete documentation package: before/after photos of each run, the signed work order, and my notes on the RTU condition.", next: 'impressed', score: 5, reason: 'Professional documentation', requiresPhotos: true },
+          { text: "Here are the photos and invoice. Everything's been cleaned per the work order.", next: 'satisfied', score: 2, reason: 'Met requirements', requiresPhotos: true },
+          { text: "Job's complete. Here's the invoice.", next: 'incomplete', score: -3, reason: 'Insufficient documentation' }
+        ]
+      },
+      impressed: {
+        speaker: 'customer',
+        text: "This is exactly what I needed. The property manager will want copies of these. Any concerns about the system I should flag?",
+        choices: [
+          { text: "The RTU filters should be changed monthly - they were pretty loaded. Also, one of the return grilles has a broken louver that should be replaced.", next: 'valuable_feedback', score: 5, reason: 'Proactive maintenance notes' },
+          { text: "System's in good shape. Just standard maintenance going forward.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      satisfied: {
+        speaker: 'customer',
+        text: "Good. I'll add these to the maintenance file. Anything notable about the system?",
+        choices: [
+          { text: "One note - the disconnect on the roof should be tightened. It's working fine but a bit loose.", next: 'helpful', score: 3, reason: 'Helpful observation' },
+          { text: "Nothing unusual. Standard buildup for a commercial system.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      incomplete: {
+        speaker: 'customer',
+        text: "Just an invoice? I requested documentation. Do you have before and after photos?",
+        choices: [
+          { text: "I apologize - let me email you the complete photo documentation within the hour.", next: 'recovered', score: 0, reason: 'Promised follow-up' },
+          { text: "We don't usually do photos for commercial jobs.", next: 'disappointed', score: -5, reason: 'Failed to meet business requirements' }
+        ]
+      },
+      valuable_feedback: {
+        speaker: 'customer',
+        text: "That's helpful. I'll add the grille to our maintenance queue. *signs invoice* We use the same company for our other properties - I'll pass your name along.",
+        choices: [
+          { text: "I appreciate that. Here's my direct line if you need to schedule any of those.", next: null, score: 3, reason: 'Generated future business' }
+        ]
+      },
+      helpful: {
+        speaker: 'customer',
+        text: "Good catch on the disconnect. I'll have our electrician look at it. *signs* Thanks for being thorough.",
+        choices: [
+          { text: "Happy to help. Call us for the next scheduled cleaning.", next: null, score: 2, reason: 'Professional closing' }
+        ]
+      },
+      recovered: {
+        speaker: 'customer',
+        text: "Please do. I need those for our files. The property management company requires them.",
+        choices: [
+          { text: "[Make note to email photos immediately after leaving]", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      disappointed: {
+        speaker: 'customer',
+        text: "That's... not acceptable for a commercial account. I'll have to note that when we review vendors next quarter.",
+        choices: [
+          { text: "I understand. I apologize for the oversight.", next: null, score: -3, reason: 'Lost commercial credibility' }
+        ]
+      },
+      signature: {
+        speaker: 'customer',
+        text: "Alright, sign here... *processes payment* We'll call when the next service is due.",
+        choices: [
+          { text: "Sounds good. Thanks for the business.", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  security: {
+    start: 'security_signoff',
+    nodes: {
+      security_signoff: {
+        speaker: 'customer',
+        text: "You're done? I need to escort you out and verify you haven't left any equipment behind. Standard procedure. Got your documentation for the facilities office?",
+        choices: [
+          { text: "All set - full photo documentation, signed work orders, and my badge and key are ready to return.", next: 'smooth_checkout', score: 5, reason: 'Prepared for security protocol', requiresPhotos: true },
+          { text: "Here's the paperwork. Ready for the escort out.", next: 'standard_checkout', score: 2, reason: 'Followed procedure' },
+          { text: "Yeah, we're done. Can I just leave through the main entrance?", next: 'protocol_violation', score: -5, reason: 'Attempted to bypass security' }
+        ]
+      },
+      smooth_checkout: {
+        speaker: 'customer',
+        text: "*checks returned items* Badge, key, visitor log signed out... everything's in order. You're one of the easier contractors we've had.",
+        choices: [
+          { text: "Thanks for making the access smooth. Officer Davis was helpful getting us to the mechanical rooms.", next: 'positive_note', score: 3, reason: 'Acknowledged security help' },
+          { text: "Just doing our job. Thanks for the escort.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      standard_checkout: {
+        speaker: 'customer',
+        text: "*reviews paperwork* This goes to Martinez in Facilities. Sign the visitor log on your way out. I'll walk you to the exit.",
+        choices: [
+          { text: "Understood. Thanks for the assistance today.", next: 'signature', score: 0, reason: null }
+        ]
+      },
+      protocol_violation: {
+        speaker: 'customer',
+        text: "*steps in front of you* No. Escort required for all contractors. And I need that badge back before you leave the building.",
+        choices: [
+          { text: "You're right, sorry. Here's the badge. Lead the way.", next: 'corrected', score: 0, reason: 'Corrected after reminder' },
+          { text: "*sighs* Fine. Let's go.", next: 'noted', score: -3, reason: 'Attitude with security' }
+        ]
+      },
+      positive_note: {
+        speaker: 'customer',
+        text: "I'll let her know. *makes note* You're cleared for future access - I'll update your contractor file. Makes check-in faster next time.",
+        choices: [
+          { text: "That's helpful, thank you. We'll be back in a few months for the other floors.", next: null, score: 2, reason: 'Established ongoing access' }
+        ]
+      },
+      corrected: {
+        speaker: 'customer',
+        text: "*walks you to exit* Sign out here. We'll see you next time.",
+        choices: [
+          { text: "[Sign out and exit]", next: null, score: 0, reason: null }
+        ]
+      },
+      noted: {
+        speaker: 'customer',
+        text: "*makes note on clipboard* ...Sign out. Your company will receive the invoice through Facilities.",
+        choices: [
+          { text: "[Sign out quietly]", next: null, score: 0, reason: null }
+        ]
+      },
+      signature: {
+        speaker: 'customer',
+        text: "Visitor log signed. You're all set. Exit's this way.",
+        choices: [
+          { text: "Thanks. See you on the next phase of the project.", next: null, score: 0, reason: null }
+        ]
+      }
+    }
+  },
+
+  absent: {
+    start: 'text_completion',
+    nodes: {
+      text_completion: {
+        speaker: 'customer',
+        text: "[Your text: 'All done! Everything cleaned, took about 4 hours. Left invoice on the counter. Any questions, call me.']",
+        choices: [
+          { text: "[Send with before/after photos attached]", next: 'photo_response', score: 5, reason: 'Sent documentation', requiresPhotos: true },
+          { text: "[Send text as written]", next: 'basic_response', score: 2, reason: 'Basic communication' },
+          { text: "[Leave without texting - just leave invoice]", next: 'no_response', score: -5, reason: 'No completion communication' }
+        ]
+      },
+      photo_response: {
+        speaker: 'customer',
+        text: "[Reply] 'Wow those before photos are gross! 😂 Glad it's clean now. Payment coming via Venmo. Thanks again!'",
+        choices: [
+          { text: "[Reply] 'Ha! Yeah it needed it. Payment received, you're all set. Call if you have any questions!'", next: null, score: 2, reason: 'Friendly professional closing' },
+          { text: "[Confirm payment received and leave]", next: null, score: 0, reason: null }
+        ]
+      },
+      basic_response: {
+        speaker: 'customer',
+        text: "[Reply] 'Thanks! Did you take any pics? Just want to see what was in there'",
+        choices: [
+          { text: "[Send photos now] 'Here you go - quite a bit of buildup in the returns!'", next: 'late_photos', score: 2, reason: 'Provided photos on request', requiresPhotos: true },
+          { text: "[Reply] 'Sorry, didn't get photos this time. But everything's clean now.'", next: 'no_photos_response', score: -3, reason: 'No documentation available' }
+        ]
+      },
+      no_response: {
+        speaker: 'system',
+        text: "You leave without confirming completion. An hour later, your phone rings - it's the customer.",
+        choices: [
+          { text: "[Answer] 'Hi, yes, everything's done. Sorry I didn't text - invoice is on the counter.'", next: 'annoyed_callback', score: 0, reason: null }
+        ]
+      },
+      late_photos: {
+        speaker: 'customer',
+        text: "[Reply] 'Nasty! Glad that's gone. Payment sent. Thanks!'",
+        choices: [
+          { text: "[Confirm payment]", next: null, score: 0, reason: null }
+        ]
+      },
+      no_photos_response: {
+        speaker: 'customer',
+        text: "[Reply] 'Oh... ok. I was hoping to see what was in there. Oh well. Payment sent anyway.'",
+        choices: [
+          { text: "[Confirm payment]", next: null, score: 0, reason: null }
+        ]
+      },
+      annoyed_callback: {
+        speaker: 'customer',
+        text: "I've been waiting to hear from you. I didn't know if you were done or still there. Please text next time.",
+        choices: [
+          { text: "You're right, I apologize. Everything's complete - I should have confirmed before leaving.", next: null, score: -2, reason: 'Had to be prompted for communication' }
+        ]
+      }
+    }
+  },
+
+  facilities: {
+    start: 'facilities_debrief',
+    nodes: {
+      facilities_debrief: {
+        speaker: 'customer',
+        text: "Finished with Floor 2? Let's debrief before you pack up. I need the documentation for county records, and any issues you found.",
+        choices: [
+          { text: "Here's the full report: photos of each unit, work completed, and a few items to flag. The unit in Judge Williams' chambers has a noisy blower motor.", next: 'thorough_report', score: 5, reason: 'Comprehensive reporting', requiresPhotos: true },
+          { text: "Floor 2 complete. Photos attached. One unit in the records room had heavy buildup - might indicate a filter issue.", next: 'good_report', score: 3, reason: 'Solid documentation', requiresPhotos: true },
+          { text: "All done. Here's the paperwork.", next: 'minimal_report', score: -3, reason: 'Insufficient reporting for institutional client' }
+        ]
+      },
+      thorough_report: {
+        speaker: 'customer',
+        text: "The blower motor - is that urgent or can it wait? I've got limited maintenance budget this quarter.",
+        choices: [
+          { text: "It can wait a month or two, but I'd get it looked at. It's not failing, just worn. Here's the model number if you want to get a quote.", next: 'impressed', score: 5, reason: 'Helpful prioritization' },
+          { text: "Not urgent, but should be on your radar.", next: 'satisfied', score: 2, reason: 'Adequate guidance' }
+        ]
+      },
+      good_report: {
+        speaker: 'customer',
+        text: "Filter issue? Our maintenance guy should be changing those monthly. I'll check on that. Anything else?",
+        choices: [
+          { text: "Just that one observation. The rest of the units on Floor 2 are in good shape. We're scheduled for Floor 3 tomorrow?", next: 'confirmed', score: 2, reason: 'Clear communication' },
+          { text: "That's it. See you tomorrow for Floor 3.", next: 'confirmed', score: 0, reason: null }
+        ]
+      },
+      minimal_report: {
+        speaker: 'customer',
+        text: "That's it? I need more than that for county records. What about the photos? Condition of each unit? Any maintenance flags?",
+        choices: [
+          { text: "You're right - let me pull up the full documentation. I have photos of each unit and notes on condition.", next: 'recovered', score: 0, reason: 'Provided documentation when pressed' },
+          { text: "It's all clean. Nothing unusual to report.", next: 'disappointed', score: -5, reason: 'Failed to meet institutional requirements' }
+        ]
+      },
+      impressed: {
+        speaker: 'customer',
+        text: "That's exactly what I need. *takes notes* I'll get a quote this week. You guys are thorough - that's refreshing. Same time tomorrow for Floor 3?",
+        choices: [
+          { text: "We'll be here at 7. Thanks for the coordination today - made everything run smooth.", next: null, score: 3, reason: 'Secured ongoing work relationship' }
+        ]
+      },
+      satisfied: {
+        speaker: 'customer',
+        text: "Alright, I'll add it to the list. See you tomorrow at 7 for Floor 3. Security will have your badges ready.",
+        choices: [
+          { text: "Sounds good. We'll check in with you first thing.", next: null, score: 0, reason: null }
+        ]
+      },
+      confirmed: {
+        speaker: 'customer',
+        text: "Yep, Floor 3 tomorrow. Same start time. Courtroom C should be clear in the morning, but we'll need to work around the afternoon session.",
+        choices: [
+          { text: "We'll hit Courtroom C first thing. Any other scheduling constraints I should know about?", next: null, score: 2, reason: 'Proactive scheduling' },
+          { text: "Got it. See you then.", next: null, score: 0, reason: null }
+        ]
+      },
+      recovered: {
+        speaker: 'customer',
+        text: "*reviews documentation* Okay, this is what I needed. Please lead with this next time - county auditors want everything documented.",
+        choices: [
+          { text: "Understood. I'll have the Floor 3 report ready as soon as we finish tomorrow.", next: null, score: 0, reason: null }
+        ]
+      },
+      disappointed: {
+        speaker: 'customer',
+        text: "I need documentation for a county building. 'It's clean' doesn't work. I'll need you to send photos before I can process payment.",
+        choices: [
+          { text: "I'll email the complete documentation tonight. My apologies for the oversight.", next: null, score: -3, reason: 'Documentation failure on institutional job' }
+        ]
+      }
+    }
+  }
+};
+
 const DUCT_MATERIALS = {
   rigid: { name: 'Rigid Metal', allowedTools: ['aggressive_whip', 'rotating_brush', 'air_wash'], color: '#64748b', warning: 'Watch for sharp seam edges' },
   flex: { name: 'Flex Duct', allowedTools: ['gentle_whip', 'air_wash'], color: '#fbbf24', warning: 'Aggressive whip = collapse/tear' },
@@ -2275,48 +2803,315 @@ function DuctCleaning({ state, dispatch }) {
 // PHASE 5: COMPLETION
 // ============================================================================
 
+function CustomerWalkthrough({ state, dispatch, onComplete }) {
+  const customer = CUSTOMER_TYPES[state.customerType];
+  const dialogueTree = COMPLETION_DIALOGUES[state.customerType];
+  const hasPhotos = state.photosDocumented;
+
+  const [currentNodeId, setCurrentNodeId] = useState(dialogueTree?.start);
+  const [scoreHistory, setScoreHistory] = useState([]);
+  const [showingFeedback, setShowingFeedback] = useState(false);
+  const [lastChoice, setLastChoice] = useState(null);
+  const [dialogueComplete, setDialogueComplete] = useState(false);
+  const [noPhotosPenaltyApplied, setNoPhotosPenaltyApplied] = useState(false);
+
+  const currentNode = dialogueTree?.nodes[currentNodeId];
+
+  // Filter choices based on photo availability
+  const getAvailableChoices = (choices) => {
+    return choices.map(choice => {
+      if (choice.requiresPhotos && !hasPhotos) {
+        return {
+          ...choice,
+          disabled: true,
+          text: choice.text + " [No photos taken]",
+          originalScore: choice.score,
+          score: -5,
+          reason: 'Promised photos but have none'
+        };
+      }
+      return choice;
+    });
+  };
+
+  const handleChoice = (choice) => {
+    setLastChoice(choice);
+    setShowingFeedback(true);
+
+    // Check if trying to use photos without having them
+    if (choice.requiresPhotos && !hasPhotos && !noPhotosPenaltyApplied) {
+      dispatch({ type: 'ADD_PENALTY', reason: 'No documentation to show customer', points: 5 });
+      setNoPhotosPenaltyApplied(true);
+      setScoreHistory(prev => [...prev, { score: -5, reason: 'No documentation to show customer' }]);
+    } else if (choice.score > 0) {
+      dispatch({ type: 'ADD_BONUS', reason: choice.reason || 'Good walkthrough interaction', points: choice.score });
+      setScoreHistory(prev => [...prev, { score: choice.score, reason: choice.reason }]);
+    } else if (choice.score < 0) {
+      dispatch({ type: 'ADD_PENALTY', reason: choice.reason || 'Poor walkthrough interaction', points: Math.abs(choice.score) });
+      setScoreHistory(prev => [...prev, { score: choice.score, reason: choice.reason }]);
+    }
+  };
+
+  const handleContinue = () => {
+    setShowingFeedback(false);
+
+    if (lastChoice.next) {
+      setCurrentNodeId(lastChoice.next);
+      setLastChoice(null);
+    } else {
+      setDialogueComplete(true);
+    }
+  };
+
+  const handleFinish = () => {
+    dispatch({ type: 'COMPLETE_WALKTHROUGH' });
+    onComplete();
+  };
+
+  const totalScore = scoreHistory.reduce((sum, item) => sum + item.score, 0);
+
+  // Dialogue complete - show summary
+  if (dialogueComplete) {
+    return (
+      <div className="space-y-4">
+        <div className={`border-2 rounded-lg p-6 ${totalScore >= 5 ? 'bg-green-900/30 border-green-500' : totalScore >= 0 ? 'bg-zinc-800/50 border-yellow-500/50' : 'bg-red-900/30 border-red-500'}`}>
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-4xl">{customer.avatar}</span>
+            <div>
+              <h3 className={`font-bold text-xl ${totalScore >= 5 ? 'text-green-400' : totalScore >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                Walkthrough Complete
+              </h3>
+              <p className="text-zinc-400">{customer.name}</p>
+            </div>
+          </div>
+
+          {scoreHistory.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <p className="text-zinc-500 text-sm font-bold uppercase">Customer Interaction:</p>
+              {scoreHistory.map((item, i) => (
+                <div key={i} className={`flex justify-between text-sm px-3 py-1 rounded ${item.score > 0 ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                  <span>{item.reason}</span>
+                  <span className="font-bold">{item.score > 0 ? '+' : ''}{item.score}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className={`text-center py-3 rounded ${totalScore >= 5 ? 'bg-green-900/50' : totalScore >= 0 ? 'bg-zinc-900' : 'bg-red-900/50'}`}>
+            <p className="text-zinc-400 text-sm">Customer Satisfaction</p>
+            <p className={`text-2xl font-bold ${totalScore >= 5 ? 'text-green-400' : totalScore >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+              {totalScore >= 8 ? 'Impressed' : totalScore >= 5 ? 'Satisfied' : totalScore >= 0 ? 'Neutral' : totalScore >= -5 ? 'Disappointed' : 'Unhappy'}
+            </p>
+          </div>
+        </div>
+        <button onClick={handleFinish} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
+          Finish Walkthrough →
+        </button>
+      </div>
+    );
+  }
+
+  // Showing feedback after a choice
+  if (showingFeedback && lastChoice) {
+    const effectiveScore = (lastChoice.requiresPhotos && !hasPhotos) ? -5 : lastChoice.score;
+    const effectiveReason = (lastChoice.requiresPhotos && !hasPhotos) ? 'No documentation to show customer' : lastChoice.reason;
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-3xl">👷</span>
+            <div className="flex-1">
+              <p className="text-zinc-500 text-xs uppercase">Your Response</p>
+              <p className="text-zinc-200">{lastChoice.text.replace(' [No photos taken]', '')}</p>
+            </div>
+          </div>
+
+          {lastChoice.requiresPhotos && !hasPhotos && (
+            <div className="p-3 rounded-lg bg-red-900/30 border border-red-500/50 mb-3">
+              <p className="text-red-400">
+                <span className="font-bold">⚠️ Problem:</span> You mentioned photos but didn't take any during the job!
+              </p>
+            </div>
+          )}
+
+          {effectiveScore !== 0 && (
+            <div className={`p-3 rounded-lg ${effectiveScore > 0 ? 'bg-green-900/30 border border-green-500/50' : 'bg-red-900/30 border border-red-500/50'}`}>
+              <div className="flex justify-between items-center">
+                <span className={effectiveScore > 0 ? 'text-green-400' : 'text-red-400'}>
+                  {effectiveScore > 0 ? '✓' : '✗'} {effectiveReason}
+                </span>
+                <span className={`font-bold ${effectiveScore > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {effectiveScore > 0 ? '+' : ''}{effectiveScore}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <button onClick={handleContinue} className="w-full mt-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded">
+            {lastChoice.next ? 'Continue →' : 'Finish →'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show current dialogue node
+  if (!currentNode) return null;
+
+  const availableChoices = getAvailableChoices(currentNode.choices);
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
+        <h3 className="text-yellow-400 font-bold mb-4">🤝 Customer Walkthrough</h3>
+
+        {/* Photo status warning */}
+        {!hasPhotos && (
+          <div className="bg-orange-900/30 border border-orange-500/50 rounded p-3 mb-4">
+            <p className="text-orange-400 text-sm">
+              <span className="font-bold">⚠️ Warning:</span> You didn't document photos. Some options may have penalties.
+            </p>
+          </div>
+        )}
+
+        {/* Customer info */}
+        <div className="flex items-center gap-3 p-3 bg-zinc-900 rounded border border-zinc-700 mb-4">
+          <span className="text-3xl">{customer.avatar}</span>
+          <div>
+            <p className="text-zinc-200 font-bold">{customer.name}</p>
+            <p className="text-zinc-500 text-sm">Reviewing completed work</p>
+          </div>
+        </div>
+
+        {/* Dialogue bubble */}
+        <div className="bg-zinc-900 rounded-lg p-4 border-l-4 border-yellow-500 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">{currentNode.speaker === 'customer' ? customer.avatar : currentNode.speaker === 'system' ? '📱' : '👷'}</span>
+            <span className="text-zinc-400 text-sm font-bold">
+              {currentNode.speaker === 'customer' ? customer.name : currentNode.speaker === 'system' ? 'System' : 'You'}
+            </span>
+          </div>
+          <p className="text-zinc-100 leading-relaxed">{currentNode.text}</p>
+        </div>
+
+        {/* Response choices */}
+        <div className="space-y-2">
+          <p className="text-zinc-500 text-sm">Choose your response:</p>
+          {availableChoices.map((choice, i) => (
+            <button
+              key={i}
+              onClick={() => handleChoice(choice)}
+              className={`w-full p-4 border rounded-lg text-left transition-all group ${
+                choice.disabled
+                  ? 'bg-zinc-900/50 border-orange-500/50 opacity-75'
+                  : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-700 hover:border-yellow-500'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-yellow-500 font-bold">{i + 1}.</span>
+                <span className={`${choice.disabled ? 'text-orange-300' : 'text-zinc-200 group-hover:text-zinc-100'}`}>
+                  {choice.text}
+                </span>
+              </div>
+              {choice.disabled && (
+                <p className="text-orange-400 text-xs mt-1 ml-6">⚠️ This will have consequences</p>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Score tracker */}
+      {scoreHistory.length > 0 && (
+        <div className="bg-zinc-900 rounded p-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-zinc-500">Walkthrough Progress</span>
+            <span className={totalScore >= 0 ? 'text-green-400' : 'text-red-400'}>
+              {totalScore > 0 ? '+' : ''}{totalScore} pts
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CompletionPhase({ state, dispatch }) {
-  const [step, setStep] = useState(0);
-  const [photosTaken, setPhotosTaken] = useState(false);
+  const [photosTaken, setPhotosTaken] = useState(state.photosDocumented || false);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [walkthroughDone, setWalkthroughDone] = useState(false);
-  
+
   const handlePhotos = () => {
     dispatch({ type: 'DOCUMENT_PHOTOS' });
     dispatch({ type: 'ADD_BONUS', reason: 'Proper documentation', points: 5 });
     setPhotosTaken(true);
   };
-  
-  const handleWalkthrough = () => {
-    dispatch({ type: 'COMPLETE_WALKTHROUGH' });
-    dispatch({ type: 'ADD_BONUS', reason: 'Professional walkthrough', points: 5 });
-    setWalkthroughDone(true);
+
+  const handleSkipPhotos = () => {
+    dispatch({ type: 'ADD_PENALTY', reason: 'Skipped photo documentation', points: 5 });
+    setShowWalkthrough(true);
   };
-  
+
+  const handleStartWalkthrough = () => {
+    setShowWalkthrough(true);
+  };
+
+  const handleWalkthroughComplete = () => {
+    setWalkthroughDone(true);
+    setShowWalkthrough(false);
+  };
+
   const handleComplete = () => {
     if (state.screwInventory < state.screwsNeeded) {
       dispatch({ type: 'ADD_PENALTY', reason: `Missing ${state.screwsNeeded - state.screwInventory} screws`, points: 5 });
     }
     dispatch({ type: 'COMPLETE_JOB' });
   };
-  
+
+  // Show walkthrough dialogue
+  if (showWalkthrough) {
+    return <CustomerWalkthrough state={state} dispatch={dispatch} onComplete={handleWalkthroughComplete} />;
+  }
+
   return (
     <div className="space-y-4">
       <div className="bg-zinc-800/50 border border-yellow-500/30 rounded-lg p-4">
         <h3 className="text-yellow-400 font-bold mb-4">✅ Job Completion Checklist</h3>
-        
+
         <div className="space-y-3">
-          <button onClick={handlePhotos} disabled={photosTaken} className={`w-full p-4 rounded-lg border-2 text-left transition-all ${photosTaken ? 'bg-green-900/30 border-green-500' : 'bg-zinc-900 border-zinc-700 hover:border-yellow-500'}`}>
-            <p className="text-zinc-200 font-bold">📸 Before/After Photos</p>
-            <p className="text-zinc-500 text-sm">Document work completed for customer records</p>
-            {photosTaken && <p className="text-green-400 mt-2">✓ Photos documented</p>}
-          </button>
-          
-          <button onClick={handleWalkthrough} disabled={walkthroughDone || !photosTaken} className={`w-full p-4 rounded-lg border-2 text-left transition-all ${walkthroughDone ? 'bg-green-900/30 border-green-500' : !photosTaken ? 'opacity-50 cursor-not-allowed bg-zinc-900 border-zinc-700' : 'bg-zinc-900 border-zinc-700 hover:border-yellow-500'}`}>
-            <p className="text-zinc-200 font-bold">🤝 Customer Walkthrough</p>
-            <p className="text-zinc-500 text-sm">Present work and obtain signature</p>
-            {walkthroughDone && <p className="text-green-400 mt-2">✓ Walkthrough complete</p>}
-          </button>
-          
+          {!photosTaken ? (
+            <div className="space-y-2">
+              <button onClick={handlePhotos} className="w-full p-4 rounded-lg border-2 text-left transition-all bg-zinc-900 border-zinc-700 hover:border-yellow-500">
+                <p className="text-zinc-200 font-bold">📸 Take Before/After Photos</p>
+                <p className="text-zinc-500 text-sm">Document work completed for customer records</p>
+                <p className="text-green-400 text-xs mt-1">+5 points • Required for best walkthrough options</p>
+              </button>
+              <button onClick={handleSkipPhotos} className="w-full p-2 text-sm text-zinc-500 hover:text-orange-400 transition-all">
+                Skip photos and proceed to walkthrough (-5 points)
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-lg border-2 bg-green-900/30 border-green-500">
+              <p className="text-green-400 font-bold">📸 Photos Documented</p>
+              <p className="text-zinc-400 text-sm">Before/after photos ready for customer</p>
+            </div>
+          )}
+
+          {photosTaken && !walkthroughDone && (
+            <button onClick={handleStartWalkthrough} className="w-full p-4 rounded-lg border-2 text-left transition-all bg-zinc-900 border-zinc-700 hover:border-yellow-500">
+              <p className="text-zinc-200 font-bold">🤝 Customer Walkthrough</p>
+              <p className="text-zinc-500 text-sm">Present work, explain findings, get signature</p>
+            </button>
+          )}
+
+          {walkthroughDone && (
+            <div className="p-4 rounded-lg border-2 bg-green-900/30 border-green-500">
+              <p className="text-green-400 font-bold">🤝 Walkthrough Complete</p>
+              <p className="text-zinc-400 text-sm">Customer signed off on work</p>
+            </div>
+          )}
+
           <div className="p-4 rounded-lg border-2 border-zinc-700 bg-zinc-900">
             <p className="text-zinc-200 font-bold">🔩 Screw Inventory</p>
             <div className="flex justify-between mt-2">
@@ -2333,7 +3128,7 @@ function CompletionPhase({ state, dispatch }) {
           </div>
         </div>
       </div>
-      
+
       <button onClick={handleComplete} disabled={!walkthroughDone} className={`w-full py-3 font-bold rounded transition-all ${walkthroughDone ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'}`}>
         Complete Job & View Results →
       </button>

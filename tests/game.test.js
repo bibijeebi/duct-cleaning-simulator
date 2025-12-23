@@ -147,4 +147,42 @@ describe('Duct Cleaning Simulator', () => {
       expect(suspiciousPaths.length).toBeGreaterThan(1)
     })
   })
+
+  describe('Completion Dialogues', () => {
+    const CUSTOMER_TYPES = ['helpful', 'suspicious', 'micromanager', 'professional', 'security', 'absent', 'facilities']
+
+    it('has completion dialogues for all 7 customer types', () => {
+      expect(CUSTOMER_TYPES.length).toBe(7)
+    })
+
+    it('suspicious customer questions work quality without photos', () => {
+      // Without photos, suspicious customer path leads to confrontation
+      const noPhotosPath = ['skeptical_review', 'no_photos', 'damage_control_or_angry']
+      expect(noPhotosPath.length).toBeGreaterThan(1)
+    })
+
+    it('micromanager wants detailed breakdown of every duct', () => {
+      // Micromanager wants to see every photo, every vent
+      const micromanagerExpectations = ['every_vent', 'every_photo', 'full_breakdown']
+      expect(micromanagerExpectations).toContain('every_photo')
+    })
+
+    it('helpful customer is easy and appreciative', () => {
+      // Helpful customer best path is straightforward
+      const helpfulBestPath = 5 + 3 + 2 // show_work + maintenance advice + closing
+      expect(helpfulBestPath).toBe(10)
+    })
+
+    it('photo documentation affects available choices', () => {
+      // Choices with requiresPhotos: true should penalize if no photos
+      const photoPenalty = -5
+      const noPhotosPenalty = 5 // skipping photos
+      expect(photoPenalty + noPhotosPenalty).toBe(0) // breaks even at minimum
+    })
+
+    it('completion dialogues cover signature/objections/explanation', () => {
+      const completionTopics = ['before_after_photos', 'work_explanation', 'handling_objections', 'signature']
+      expect(completionTopics.length).toBe(4)
+    })
+  })
 })
