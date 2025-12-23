@@ -67,10 +67,10 @@ npm run build    # Production build
 npm run test     # Run tests
 ```
 
-## Current State (v1.3)
+## Current State (v1.3.0)
 
-Implemented:
-- ✓ All 3 scenarios playable
+All planned features implemented:
+- ✓ All 3 scenarios playable (residential, commercial, courthouse)
 - ✓ 6-phase structure complete
 - ✓ Equipment loadout with penalties
 - ✓ Vehicle pre-trip random events
@@ -79,10 +79,16 @@ Implemented:
 - ✓ Material-specific tool rules
 - ✓ Hazard detection (mold, asbestos, dead animal)
 - ✓ Problem scenarios (painted screws, breaker trips, etc.)
-- ✓ Scoring system
-- ✓ Customer dialogue trees (branching conversations with scoring)
+- ✓ Scoring system with grade breakdown
+- ✓ Customer dialogue trees (7 customer types, branching conversations)
+- ✓ Completion dialogue trees (walkthrough with customer)
 - ✓ Vacuum gauge diagnostics training
 - ✓ Multi-day courthouse progression (3 days, 3 floors)
+- ✓ 2D site map navigation (interactive floor plans)
+- ✓ Before/after photo gallery UI
+- ✓ Keyboard shortcuts (Esc pause, Enter advance, 1-9 select)
+- ✓ Mobile responsive design (375px+)
+- ✓ Pause menu with resume/exit
 
 ### Multi-Day Courthouse Features
 - Day 1: Floor 1 (Ground Level - Courtrooms A & B, Clerk offices)
@@ -92,10 +98,6 @@ Implemented:
 - Start of day: Security check-in, equipment setup, callbacks from previous days
 - Random events reference previous days ("Security remembers you...")
 - Progress persists across days (cleaned ducts stay clean)
-
-Not yet implemented:
-- 2D site map navigation (currently menu-driven)
-- Before/after photo comparison UI
 
 ## Testing Notes
 
