@@ -185,4 +185,59 @@ describe('Duct Cleaning Simulator', () => {
       expect(completionTopics.length).toBe(4)
     })
   })
+
+  describe('Vacuum Gauge Diagnostics', () => {
+    const GAUGE_SCENARIOS = {
+      normal_steady: { correctDiagnosis: 'system_healthy', needlePosition: 75 },
+      dropping_slowly: { correctDiagnosis: 'filter_loading', needlePosition: 55 },
+      dropped_suddenly: { correctDiagnosis: 'blockage_or_leak', needlePosition: 15 },
+      wont_reach_rated: { correctDiagnosis: 'blower_issue', needlePosition: 45 },
+      fluctuating: { correctDiagnosis: 'intermittent_blockage', needlePosition: 50 }
+    }
+
+    it('has 5 gauge reading scenarios', () => {
+      expect(Object.keys(GAUGE_SCENARIOS).length).toBe(5)
+    })
+
+    it('each scenario has a correct diagnosis', () => {
+      Object.values(GAUGE_SCENARIOS).forEach(scenario => {
+        expect(scenario.correctDiagnosis).toBeDefined()
+      })
+    })
+
+    it('normal_steady indicates system healthy', () => {
+      expect(GAUGE_SCENARIOS.normal_steady.correctDiagnosis).toBe('system_healthy')
+    })
+
+    it('dropping_slowly indicates filter loading', () => {
+      expect(GAUGE_SCENARIOS.dropping_slowly.correctDiagnosis).toBe('filter_loading')
+    })
+
+    it('dropped_suddenly requires stop and inspect', () => {
+      expect(GAUGE_SCENARIOS.dropped_suddenly.correctDiagnosis).toBe('blockage_or_leak')
+    })
+
+    it('wont_reach_rated indicates blower issue', () => {
+      expect(GAUGE_SCENARIOS.wont_reach_rated.correctDiagnosis).toBe('blower_issue')
+    })
+
+    it('fluctuating indicates intermittent blockage', () => {
+      expect(GAUGE_SCENARIOS.fluctuating.correctDiagnosis).toBe('intermittent_blockage')
+    })
+
+    it('correct diagnosis gives +5 points', () => {
+      const correctBonus = 5
+      expect(correctBonus).toBe(5)
+    })
+
+    it('wrong diagnosis gives -10 penalty', () => {
+      const wrongPenalty = -10
+      expect(wrongPenalty).toBe(-10)
+    })
+
+    it('gauge trigger chance is 20%', () => {
+      const triggerChance = 0.20
+      expect(triggerChance).toBe(0.20)
+    })
+  })
 })

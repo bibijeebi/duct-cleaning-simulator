@@ -1322,6 +1322,71 @@ const TOOLS = [
 ];
 
 // ============================================================================
+// VACUUM GAUGE SCENARIOS
+// ============================================================================
+
+const GAUGE_SCENARIOS = {
+  normal_steady: {
+    id: 'normal_steady',
+    name: 'Normal - Steady Reading',
+    description: 'Gauge holding steady at rated vacuum. System operating normally.',
+    needlePosition: 75, // percentage of max
+    needleBehavior: 'steady',
+    correctDiagnosis: 'system_healthy',
+    icon: '✅',
+    color: '#22c55e'
+  },
+  dropping_slowly: {
+    id: 'dropping_slowly',
+    name: 'Slowly Dropping',
+    description: 'Vacuum reading gradually decreasing over time. Started at rated, now losing inches.',
+    needlePosition: 55,
+    needleBehavior: 'dropping',
+    correctDiagnosis: 'filter_loading',
+    icon: '📉',
+    color: '#f59e0b'
+  },
+  dropped_suddenly: {
+    id: 'dropped_suddenly',
+    name: 'Sudden Drop',
+    description: 'Vacuum suddenly dropped from rated to near zero. Happened mid-cleaning.',
+    needlePosition: 15,
+    needleBehavior: 'low',
+    correctDiagnosis: 'blockage_or_leak',
+    icon: '⚠️',
+    color: '#ef4444'
+  },
+  wont_reach_rated: {
+    id: 'wont_reach_rated',
+    name: 'Won\'t Reach Rated Vacuum',
+    description: 'System started but gauge never climbed to rated vacuum. Maxed out at 60% of expected.',
+    needlePosition: 45,
+    needleBehavior: 'stuck',
+    correctDiagnosis: 'blower_issue',
+    icon: '🔧',
+    color: '#f97316'
+  },
+  fluctuating: {
+    id: 'fluctuating',
+    name: 'Fluctuating Wildly',
+    description: 'Needle bouncing erratically between 30% and 80% of rated vacuum.',
+    needlePosition: 50,
+    needleBehavior: 'fluctuating',
+    correctDiagnosis: 'intermittent_blockage',
+    icon: '📊',
+    color: '#8b5cf6'
+  }
+};
+
+const GAUGE_DIAGNOSES = [
+  { id: 'system_healthy', text: 'System healthy - continue cleaning', forScenario: 'normal_steady' },
+  { id: 'filter_loading', text: 'Filter loading or minor leak - check filter first', forScenario: 'dropping_slowly' },
+  { id: 'blockage_or_leak', text: 'Major blockage or disconnect - stop and inspect entire line', forScenario: 'dropped_suddenly' },
+  { id: 'blower_issue', text: 'Blower problem or massive air leak - do not force, check equipment', forScenario: 'wont_reach_rated' },
+  { id: 'intermittent_blockage', text: 'Intermittent obstruction - debris may clear or needs inspection', forScenario: 'fluctuating' }
+];
+
+// ============================================================================
 // INITIAL STATE & REDUCER
 // ============================================================================
 
@@ -2612,6 +2677,205 @@ function RegisterRemoval({ state, dispatch }) {
 // PHASE 4: EXECUTION
 // ============================================================================
 
+function VacuumGauge({ scenario, animating }) {
+  const [needleAngle, setNeedleAngle] = useState(-45);
+  const [fluctOffset, setFluctOffset] = useState(0);
+
+  useEffect(() => {
+    // Convert needle position (0-100) to angle (-45 to 225 degrees)
+    const baseAngle = -45 + (scenario.needlePosition / 100) * 270;
+
+    if (scenario.needleBehavior === 'fluctuating' && animating) {
+      const interval = setInterval(() => {
+        setFluctOffset(Math.sin(Date.now() / 200) * 40);
+      }, 50);
+      return () => clearInterval(interval);
+    } else if (scenario.needleBehavior === 'dropping' && animating) {
+      const interval = setInterval(() => {
+        setNeedleAngle(prev => Math.max(-45, prev - 0.5));
+      }, 100);
+      return () => clearInterval(interval);
+    } else {
+      setNeedleAngle(baseAngle);
+      setFluctOffset(0);
+    }
+  }, [scenario, animating]);
+
+  const displayAngle = needleAngle + fluctOffset;
+
+  return (
+    <div className="relative w-48 h-48 mx-auto">
+      {/* Gauge background */}
+      <svg viewBox="0 0 200 200" className="w-full h-full">
+        {/* Outer ring */}
+        <circle cx="100" cy="100" r="95" fill="#18181b" stroke="#3f3f46" strokeWidth="3" />
+
+        {/* Gauge face gradient */}
+        <circle cx="100" cy="100" r="85" fill="#27272a" />
+
+        {/* Colored arc zones */}
+        <path d="M 100 100 L 20 100 A 80 80 0 0 1 47 47 Z" fill="#ef4444" opacity="0.3" />
+        <path d="M 100 100 L 47 47 A 80 80 0 0 1 100 20 Z" fill="#f59e0b" opacity="0.3" />
+        <path d="M 100 100 L 100 20 A 80 80 0 0 1 153 47 Z" fill="#22c55e" opacity="0.3" />
+        <path d="M 100 100 L 153 47 A 80 80 0 0 1 180 100 Z" fill="#22c55e" opacity="0.5" />
+
+        {/* Tick marks */}
+        {[...Array(11)].map((_, i) => {
+          const angle = (-45 + i * 27) * (Math.PI / 180);
+          const x1 = 100 + Math.cos(angle) * 70;
+          const y1 = 100 + Math.sin(angle) * 70;
+          const x2 = 100 + Math.cos(angle) * 80;
+          const y2 = 100 + Math.sin(angle) * 80;
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#71717a" strokeWidth="2" />;
+        })}
+
+        {/* Labels */}
+        <text x="35" y="115" fill="#71717a" fontSize="10" textAnchor="middle">0</text>
+        <text x="55" y="65" fill="#71717a" fontSize="10" textAnchor="middle">5</text>
+        <text x="100" y="40" fill="#71717a" fontSize="10" textAnchor="middle">10</text>
+        <text x="145" y="65" fill="#71717a" fontSize="10" textAnchor="middle">15</text>
+        <text x="165" y="115" fill="#71717a" fontSize="10" textAnchor="middle">20</text>
+
+        {/* Center cap */}
+        <circle cx="100" cy="100" r="12" fill="#52525b" />
+        <circle cx="100" cy="100" r="8" fill="#3f3f46" />
+
+        {/* Needle */}
+        <g transform={`rotate(${displayAngle}, 100, 100)`}>
+          <polygon points="100,30 96,100 104,100" fill={scenario.color} />
+          <circle cx="100" cy="100" r="6" fill={scenario.color} />
+        </g>
+
+        {/* Glass reflection effect */}
+        <ellipse cx="85" cy="75" rx="25" ry="15" fill="white" opacity="0.05" />
+      </svg>
+
+      {/* Unit label */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-zinc-500 text-xs">
+        inches Hg
+      </div>
+    </div>
+  );
+}
+
+function VacuumGaugeDiagnostics({ scenario, onDiagnosis }) {
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState(null);
+  const [showResult, setShowResult] = useState(false);
+  const [shuffledDiagnoses, setShuffledDiagnoses] = useState([]);
+
+  useEffect(() => {
+    // Shuffle diagnoses on mount
+    const shuffled = [...GAUGE_DIAGNOSES].sort(() => Math.random() - 0.5);
+    setShuffledDiagnoses(shuffled);
+  }, []);
+
+  const handleDiagnosis = (diagnosis) => {
+    setSelectedDiagnosis(diagnosis);
+    setShowResult(true);
+  };
+
+  const handleContinue = () => {
+    const isCorrect = selectedDiagnosis.id === scenario.correctDiagnosis;
+    onDiagnosis(isCorrect, selectedDiagnosis);
+  };
+
+  const isCorrect = selectedDiagnosis?.id === scenario.correctDiagnosis;
+
+  if (showResult) {
+    return (
+      <div className="space-y-4">
+        <div className={`border-2 rounded-lg p-4 ${isCorrect ? 'bg-green-900/30 border-green-500' : 'bg-red-900/30 border-red-500'}`}>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-4xl">{isCorrect ? '✅' : '❌'}</span>
+            <div>
+              <h3 className={`font-bold text-lg ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                {isCorrect ? 'Correct Diagnosis!' : 'Incorrect Diagnosis'}
+              </h3>
+              <p className="text-zinc-400">
+                {isCorrect ? '+5 points' : '-10 points'}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-zinc-900 rounded p-3 mb-4">
+            <p className="text-zinc-500 text-sm mb-1">Your diagnosis:</p>
+            <p className={`${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{selectedDiagnosis.text}</p>
+          </div>
+
+          {!isCorrect && (
+            <div className="bg-zinc-900 rounded p-3 mb-4">
+              <p className="text-zinc-500 text-sm mb-1">Correct diagnosis:</p>
+              <p className="text-green-400">
+                {GAUGE_DIAGNOSES.find(d => d.id === scenario.correctDiagnosis)?.text}
+              </p>
+              <p className="text-orange-400 text-sm mt-2">
+                ⚠️ Wrong diagnosis could damage equipment or miss a serious problem!
+              </p>
+            </div>
+          )}
+
+          <div className="bg-zinc-800 rounded p-3">
+            <p className="text-zinc-500 text-sm mb-1">What this reading means:</p>
+            <p className="text-zinc-300 text-sm">{scenario.description}</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleContinue}
+          className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-900 font-bold rounded"
+        >
+          Continue Cleaning →
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-zinc-800/50 border-2 border-blue-500/50 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-2xl">📊</span>
+          <h3 className="text-blue-400 font-bold text-lg">Vacuum Gauge Check</h3>
+        </div>
+
+        <p className="text-zinc-400 text-sm mb-4">
+          You glance at the vacuum gauge on the truck. What do you see?
+        </p>
+
+        {/* Visual gauge */}
+        <div className="bg-zinc-900 rounded-lg p-4 mb-4">
+          <VacuumGauge scenario={scenario} animating={true} />
+          <div className="text-center mt-2">
+            <span className="text-xl">{scenario.icon}</span>
+            <p className="text-zinc-300 font-bold">{scenario.name}</p>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 rounded p-3 mb-4">
+          <p className="text-zinc-400 text-sm">{scenario.description}</p>
+        </div>
+
+        <p className="text-zinc-500 text-sm mb-2">What's your diagnosis?</p>
+
+        <div className="space-y-2">
+          {shuffledDiagnoses.map((diagnosis, i) => (
+            <button
+              key={diagnosis.id}
+              onClick={() => handleDiagnosis(diagnosis)}
+              className="w-full p-3 bg-zinc-900 border border-zinc-700 hover:border-blue-500 rounded-lg text-left transition-all group"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-blue-400 font-bold">{i + 1}.</span>
+                <span className="text-zinc-200 group-hover:text-zinc-100">{diagnosis.text}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DuctCleaning({ state, dispatch }) {
   const [selectedTool, setSelectedTool] = useState(null);
   const [currentDuctIndex, setCurrentDuctIndex] = useState(0);
@@ -2619,10 +2883,12 @@ function DuctCleaning({ state, dispatch }) {
   const [airflowDirection, setAirflowDirection] = useState(null);
   const [showProblem, setShowProblem] = useState(false);
   const [currentProblem, setCurrentProblem] = useState(null);
-  
+  const [showGaugeCheck, setShowGaugeCheck] = useState(false);
+  const [currentGaugeScenario, setCurrentGaugeScenario] = useState(null);
+
   const ducts = SCENARIO_DUCTS[state.scenario] || [];
   const currentDuct = ducts[currentDuctIndex];
-  
+
   const triggerRandomProblem = () => {
     if (Math.random() < 0.15) {
       const problems = [...PROBLEM_SCENARIOS.common, ...(PROBLEM_SCENARIOS[state.scenario] || [])];
@@ -2631,6 +2897,32 @@ function DuctCleaning({ state, dispatch }) {
       setShowProblem(true);
       dispatch({ type: 'ENCOUNTER_PROBLEM', problem: problem.id });
     }
+  };
+
+  const triggerGaugeCheck = () => {
+    // 20% chance per duct cleaning to trigger a gauge event
+    if (Math.random() < 0.20) {
+      const scenarioKeys = Object.keys(GAUGE_SCENARIOS);
+      const randomKey = scenarioKeys[Math.floor(Math.random() * scenarioKeys.length)];
+      setCurrentGaugeScenario(GAUGE_SCENARIOS[randomKey]);
+      setShowGaugeCheck(true);
+      return true;
+    }
+    return false;
+  };
+
+  const handleGaugeDiagnosis = (isCorrect, diagnosis) => {
+    if (isCorrect) {
+      dispatch({ type: 'ADD_BONUS', reason: 'Correct gauge diagnosis', points: 5 });
+    } else {
+      dispatch({ type: 'ADD_PENALTY', reason: 'Incorrect gauge diagnosis - equipment risk', points: 10 });
+    }
+    setShowGaugeCheck(false);
+    setCurrentGaugeScenario(null);
+    // Continue to next duct
+    setCurrentDuctIndex(i => i + 1);
+    setSelectedTool(null);
+    setAirflowDirection(null);
   };
   
   if (!currentDuct || currentDuctIndex >= ducts.length) {
@@ -2681,11 +2973,18 @@ function DuctCleaning({ state, dispatch }) {
     
     setTimeout(() => {
       setCleaningInProgress(false);
+
+      // First check for problems (15% chance)
       triggerRandomProblem();
+
+      // If no problem, check for gauge event (20% chance)
       if (!showProblem) {
-        setCurrentDuctIndex(i => i + 1);
-        setSelectedTool(null);
-        setAirflowDirection(null);
+        const gaugeTriggered = triggerGaugeCheck();
+        if (!gaugeTriggered) {
+          setCurrentDuctIndex(i => i + 1);
+          setSelectedTool(null);
+          setAirflowDirection(null);
+        }
       }
     }, 1500);
   };
@@ -2723,7 +3022,17 @@ function DuctCleaning({ state, dispatch }) {
       </div>
     );
   }
-  
+
+  // Show vacuum gauge diagnostics
+  if (showGaugeCheck && currentGaugeScenario) {
+    return (
+      <VacuumGaugeDiagnostics
+        scenario={currentGaugeScenario}
+        onDiagnosis={handleGaugeDiagnosis}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
