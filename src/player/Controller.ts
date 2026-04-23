@@ -91,19 +91,23 @@ export class Controller {
 
   private bindEvents() {
     this.canvas.addEventListener('click', () => {
-      if (!this.isPointerLocked() && !this.store.getState().pauseOpen) {
+      const state = this.store.getState();
+      if (!this.isPointerLocked() && !state.pauseOpen && !state.loadoutOpen && !state.inventoryOpen) {
         void this.canvas.requestPointerLock();
       }
     });
 
     document.addEventListener('pointerlockchange', () => {
-      if (!this.isPointerLocked() && !this.store.getState().pauseOpen) {
-        this.store.getState().setPauseOpen(true);
+      const state = this.store.getState();
+      // Don't auto-pause if the user is intentionally in a menu overlay
+      if (!this.isPointerLocked() && !state.pauseOpen && !state.loadoutOpen && !state.inventoryOpen) {
+        state.setPauseOpen(true);
       }
     });
 
     document.addEventListener('mousemove', (event) => {
-      if (!this.isPointerLocked() || this.store.getState().pauseOpen) return;
+      const state = this.store.getState();
+      if (!this.isPointerLocked() || state.pauseOpen || state.loadoutOpen || state.inventoryOpen) return;
       this.yaw -= event.movementX * 0.006;
       this.pitch -= event.movementY * 0.006;
       this.pitch = Math.max(-1.38, Math.min(1.38, this.pitch));
@@ -112,7 +116,9 @@ export class Controller {
     document.addEventListener('keydown', (event) => {
       if (event.code === 'Tab') {
         event.preventDefault();
-        this.store.getState().setInventoryOpen(!this.store.getState().inventoryOpen);
+        const next = !this.store.getState().inventoryOpen;
+        this.store.getState().setInventoryOpen(next);
+        if (next && document.pointerLockElement) document.exitPointerLock();
         return;
       }
       if (event.code === 'Escape') {

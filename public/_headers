@@ -1,0 +1,31 @@
+# Static assets: cache aggressively
+/textures/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/posters/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/decals/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# OG and favicons: cache but allow refresh
+/og-image.*
+  Cache-Control: public, max-age=3600
+
+/favicon-*.png
+  Cache-Control: public, max-age=86400
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400
+
+# HTML: always validate
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()

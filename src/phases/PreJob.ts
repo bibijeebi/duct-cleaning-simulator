@@ -12,6 +12,8 @@ export class PreJobPhase {
     const store = services.store.getState();
     if (data.type === 'van') {
       store.setLoadoutOpen(true);
+      // Release pointer lock so the user can click the loadout UI
+      if (document.pointerLockElement) document.exitPointerLock();
       return;
     }
     if (data.type === 'frontDoor') {
