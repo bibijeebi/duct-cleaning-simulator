@@ -1,0 +1,28 @@
+{
+  "name": "duct-cleaning-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.15.0",
+    "three": "^0.172.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.184.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "rollup": "npm:@rollup/wasm-node@4.60.2"
+    }
+  }
+}
