@@ -7,6 +7,7 @@ import {
   DirectionalLight,
   Fog,
   Group,
+  HemisphereLight,
   Mesh,
   MeshStandardMaterial,
   Object3D,
@@ -14,6 +15,7 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
+  SRGBColorSpace,
   Vector3,
   WebGLRenderer,
 } from 'three';
@@ -48,7 +50,8 @@ export class SceneManager {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = PCFSoftShadowMap;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.outputColorSpace = SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
 
     this.world = new rapier.World({ x: 0, y: -9.81, z: 0 });
@@ -124,8 +127,13 @@ export class SceneManager {
   }
 
   private addLighting() {
-    const ambient = new AmbientLight('#b6c9d8', 0.82);
+    const ambient = new AmbientLight('#b6c9d8', 0.55);
     this.scene.add(ambient);
+
+    // Hemisphere light simulates sky vs ground bounce — warms interiors up
+    const hemi = new HemisphereLight('#e6f1ff', '#7a6b4f', 0.6);
+    hemi.position.set(0, 10, 0);
+    this.scene.add(hemi);
 
     const sun = new DirectionalLight('#fff1cb', 2.4);
     sun.position.set(-18, 24, -12);

@@ -5,6 +5,10 @@ import {
   NearestFilter,
   RepeatWrapping,
   SRGBColorSpace,
+  TextureLoader,
+  Vector2,
+  LinearFilter,
+  LinearMipmapLinearFilter,
 } from 'three';
 
 export const palette = {
@@ -24,16 +28,61 @@ export const palette = {
   rubber: '#111418',
 };
 
+const loader = new TextureLoader();
+
+function loadTiled(name: string, repeatX = 1, repeatY = 1) {
+  const tex = loader.load(`/textures/${name}.webp`);
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
+  tex.repeat = new Vector2(repeatX, repeatY);
+  tex.colorSpace = SRGBColorSpace;
+  tex.anisotropy = 8;
+  tex.minFilter = LinearMipmapLinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+function loadDecal(path: string) {
+  const tex = loader.load(path);
+  tex.colorSpace = SRGBColorSpace;
+  tex.anisotropy = 8;
+  tex.minFilter = LinearMipmapLinearFilter;
+  tex.magFilter = LinearFilter;
+  return tex;
+}
+
+const tex = {
+  drywall: loadTiled('drywall_beige', 3, 2),
+  carpet: loadTiled('carpet_tile_gray', 4, 4),
+  galvanized: loadTiled('galvanized_sheet_metal', 2, 2),
+  flexDuct: loadTiled('flex_duct_silver', 1, 3),
+  acousticTile: loadTiled('acoustic_ceiling_tile', 1, 1),
+  concrete: loadTiled('concrete_floor', 3, 3),
+  ceilingGrid: loadTiled('drop_ceiling_grid', 4, 4),
+  safetyYellow: loadTiled('safety_yellow_plastic', 1, 1),
+};
+
+export const decalTextures = {
+  vanSide: () => loadDecal('/decals/van_side_decal.webp'),
+  posterSafety: () => loadDecal('/posters/safety_first.webp'),
+  posterAsbestos: () => loadDecal('/posters/hazard_asbestos.webp'),
+  posterNadca: () => loadDecal('/posters/nadca_certified.webp'),
+  posterThinkSafety: () => loadDecal('/posters/think_safety.webp'),
+};
+
 export const materials = {
   asphalt: new MeshStandardMaterial({ color: palette.asphalt, roughness: 0.92, metalness: 0.02 }),
   parkingStripe: new MeshStandardMaterial({ color: '#e8e7df', roughness: 0.65 }),
-  concrete: new MeshStandardMaterial({ color: '#a8a39a', roughness: 0.82 }),
-  wall: new MeshStandardMaterial({ color: palette.wall, roughness: 0.72 }),
-  wallDark: new MeshStandardMaterial({ color: '#b7ad99', roughness: 0.8 }),
+  concrete: new MeshStandardMaterial({ map: tex.concrete, roughness: 0.82 }),
+
+  wall: new MeshStandardMaterial({ map: tex.drywall, roughness: 0.85, color: '#f0e9d6' }),
+  wallDark: new MeshStandardMaterial({ map: tex.drywall, roughness: 0.88, color: '#c7bea9' }),
   baseboard: new MeshStandardMaterial({ color: palette.wallTrim, roughness: 0.68 }),
-  carpet: new MeshStandardMaterial({ color: palette.carpet, roughness: 0.94 }),
-  ceilingTile: new MeshStandardMaterial({ color: palette.ceiling, roughness: 0.86 }),
-  ceilingGrid: new MeshStandardMaterial({ color: '#a4a299', roughness: 0.7, metalness: 0.1 }),
+
+  carpet: new MeshStandardMaterial({ map: tex.carpet, roughness: 0.94 }),
+  ceilingTile: new MeshStandardMaterial({ map: tex.acousticTile, roughness: 0.86 }),
+  ceilingGrid: new MeshStandardMaterial({ map: tex.ceilingGrid, roughness: 0.7, metalness: 0.1 }),
+
   fluorescent: new MeshStandardMaterial({
     color: '#f5fbff',
     emissive: '#bceaff',
@@ -47,13 +96,16 @@ export const materials = {
     transparent: true,
     opacity: 0.6,
   }),
-  metal: new MeshStandardMaterial({ color: palette.metal, roughness: 0.48, metalness: 0.58 }),
+
+  metal: new MeshStandardMaterial({ map: tex.galvanized, roughness: 0.48, metalness: 0.58 }),
   darkMetal: new MeshStandardMaterial({ color: '#2e3439', roughness: 0.55, metalness: 0.45 }),
-  galvanized: new MeshStandardMaterial({ color: '#aeb5b8', roughness: 0.38, metalness: 0.74 }),
-  ductDark: new MeshStandardMaterial({ color: palette.ductDark, roughness: 0.43, metalness: 0.62 }),
+  galvanized: new MeshStandardMaterial({ map: tex.galvanized, roughness: 0.45, metalness: 0.62 }),
+  ductDark: new MeshStandardMaterial({ map: tex.flexDuct, roughness: 0.43, metalness: 0.4 }),
+
   rubber: new MeshStandardMaterial({ color: palette.rubber, roughness: 0.72 }),
-  yellow: new MeshStandardMaterial({ color: palette.safetyYellow, roughness: 0.48 }),
+  yellow: new MeshStandardMaterial({ map: tex.safetyYellow, color: palette.safetyYellow, roughness: 0.48 }),
   vanWhite: new MeshStandardMaterial({ color: '#f1f2eb', roughness: 0.5 }),
+
   supply: new MeshStandardMaterial({ color: '#d9e7ef', roughness: 0.42, metalness: 0.28 }),
   return: new MeshStandardMaterial({ color: '#c3c8c9', roughness: 0.48, metalness: 0.22 }),
   identifiedSupply: new MeshStandardMaterial({
@@ -70,6 +122,7 @@ export const materials = {
     roughness: 0.38,
     metalness: 0.25,
   }),
+
   plastic: new MeshStandardMaterial({
     color: palette.plastic,
     transparent: true,
@@ -86,7 +139,12 @@ export const materials = {
   hole: new MeshStandardMaterial({ color: '#101214', roughness: 0.85 }),
 };
 
-export function makeTextMaterial(text: string, width = 512, height = 256, options?: { background?: string; color?: string; subtitle?: string }) {
+export function makeTextMaterial(
+  text: string,
+  width = 512,
+  height = 256,
+  options?: { background?: string; color?: string; subtitle?: string },
+) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;

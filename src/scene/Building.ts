@@ -1,4 +1,4 @@
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3 } from 'three';
+import { BoxGeometry, DoubleSide, Group, Mesh, MeshStandardMaterial, PlaneGeometry, Texture, Vector3 } from 'three';
 import { createDuctVisuals, DuctVisuals, syncAccessVisuals } from '../entities/Duct';
 import { createRegisterVisual, RegisterVisual } from '../entities/Register';
 import {
@@ -13,7 +13,7 @@ import { gameStore, type GameState } from '../state/gameStore';
 import type { InteractiveData } from '../types/game';
 import { MechanicalRoom } from './MechanicalRoom';
 import { SceneManager } from './SceneManager';
-import { makeGridMaterial, materials } from './materials';
+import { decalTextures, makeGridMaterial, materials } from './materials';
 
 export class Building {
   readonly group = new Group();
@@ -36,6 +36,7 @@ export class Building {
     this.group.add(this.ductVisuals.group);
     this.mechanicalRoom = new MechanicalRoom(sceneManager);
     this.cleaningStation = this.createCleaningStation();
+    this.createPosters();
     this.sync(gameStore.getState());
   }
 
@@ -211,5 +212,35 @@ export class Building {
     const trim = new Mesh(new BoxGeometry(size.x + 0.02, 0.12, size.z + 0.02), materials.baseboard);
     trim.position.set(position.x, 0.12, position.z);
     this.group.add(trim);
+  }
+
+  private createPosters() {
+    // Attach OSHA-style safety posters to walls. Each: 0.9m x 1.2m, mounted at eye level.
+    const make = (textureFn: () => Texture, position: Vector3, rotationY: number) => {
+      const mat = new MeshStandardMaterial({
+        map: textureFn(),
+        roughness: 0.85,
+        metalness: 0.02,
+        side: DoubleSide,
+      });
+      const plane = new Mesh(new PlaneGeometry(0.9, 1.2), mat);
+      plane.position.copy(position);
+      plane.rotation.y = rotationY;
+      plane.castShadow = false;
+      plane.receiveShadow = true;
+      this.group.add(plane);
+    };
+
+    // Reception area - Safety First poster on the south wall
+    make(decalTextures.posterSafety, new Vector3(-8, 1.55, -9.31), 0);
+
+    // Main hallway - Think Safety poster
+    make(decalTextures.posterThinkSafety, new Vector3(-2.11, 1.55, 2), Math.PI / 2);
+
+    // Conference room wall - NADCA certification
+    make(decalTextures.posterNadca, new Vector3(-7, 1.55, 3.31), 0);
+
+    // Mechanical room - Asbestos hazard warning (immersive foreshadowing)
+    make(decalTextures.posterAsbestos, new Vector3(4.4, 1.55, 6.21), 0);
   }
 }

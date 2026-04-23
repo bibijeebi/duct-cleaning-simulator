@@ -1,6 +1,6 @@
-import { BoxGeometry, CylinderGeometry, Group, Mesh, Vector3 } from 'three';
+import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, PlaneGeometry, Vector3 } from 'three';
 import { SceneManager } from '../scene/SceneManager';
-import { materials, makeTextMaterial } from '../scene/materials';
+import { materials, makeTextMaterial, decalTextures } from '../scene/materials';
 import { createNegativeAirMachine, createShopVac, makeHose } from './Equipment';
 import type { InteractiveData } from '../types/game';
 
@@ -30,13 +30,21 @@ export class Van {
     windshield.rotation.x = -0.16;
     this.group.add(windshield);
 
-    const logo = new Mesh(
-      new BoxGeometry(0.04, 0.78, 2.0),
-      makeTextMaterial('Carolina Quality Air', 512, 256, { color: '#d7b900' }),
-    );
-    logo.position.set(1.15, 1.22, -0.75);
-    logo.rotation.y = Math.PI / 2;
-    this.group.add(logo);
+    // Van side decals - both sides with real Carolina Quality Air branding
+    const decalMat = new MeshStandardMaterial({
+      map: decalTextures.vanSide(),
+      roughness: 0.55,
+      metalness: 0.05,
+    });
+    const decalRight = new Mesh(new PlaneGeometry(3.8, 1.3), decalMat);
+    decalRight.position.set(1.128, 1.22, -0.2);
+    decalRight.rotation.y = -Math.PI / 2;
+    this.group.add(decalRight);
+
+    const decalLeft = new Mesh(new PlaneGeometry(3.8, 1.3), decalMat);
+    decalLeft.position.set(-1.128, 1.22, -0.2);
+    decalLeft.rotation.y = Math.PI / 2;
+    this.group.add(decalLeft);
 
     const leftDoor = new Mesh(new BoxGeometry(0.06, 1.55, 1.05), materials.vanWhite);
     leftDoor.position.set(-0.42, 1.1, 2.72);

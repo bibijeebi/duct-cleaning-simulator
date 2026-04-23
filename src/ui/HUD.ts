@@ -112,7 +112,31 @@ export class HUD implements PhaseUi {
     `;
     const toolName = selectedToolName(state);
     const toolItem = equipmentById.get(state.currentToolId);
+    const iconMap: Record<string, string> = {
+      'agitation-wand': 'wand',
+      'negative-air-machine': 'negative_air_machine',
+      'flex-tubing': 'flex_tubing',
+      'portable-hepa-vac': 'vacuum',
+      'plastic-sheeting': 'plastic_sheeting',
+      'screw-gun': 'screw_gun',
+      'hole-saw': 'hole_saw',
+      'fsk-tape': 'fsk_tape',
+      'patch-kit': 'sheet_metal_patch',
+      'mastic': 'mastic',
+      'compressor-hose': 'compressor_hose',
+      'chimney-brush': 'chimney_brush',
+      'shop-broom': 'shop_broom',
+      'coil-cleaner': 'coil_cleaner',
+      'pressure-washer': 'pressure_washer',
+      'n95-masks': 'n95_mask',
+      'duct-tape': 'duct_tape_trap',
+    };
+    const iconName = iconMap[state.currentToolId];
+    const iconHtml = iconName
+      ? `<img src="/icons/${iconName}.webp" alt="${toolName}" class="${styles.toolIcon ?? ''}" />`
+      : '';
     this.tool.innerHTML = `
+      ${iconHtml}
       <span>Tool</span>
       <strong>${toolName}</strong>
       <small>${toolItem?.name ?? 'Hands'}</small>
